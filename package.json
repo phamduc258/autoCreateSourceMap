@@ -1,0 +1,18 @@
+{
+  "name": "dom-crawler",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Tool lay DOM/selector tu site test de AI sinh Playwright test",
+  "scripts": {
+    "crawl": "tsx crawler/crawl.ts",
+    "relogin": "tsx crawler/crawl.ts --relogin"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.10.0",
+    "dotenv": "^16.4.7",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
