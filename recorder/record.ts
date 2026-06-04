@@ -29,11 +29,23 @@ const KEEP = (process.env.RECORD_SELECTORS || 'testId,role,placeholder,alt,title
 const CODE_HTML = `<!doctype html><html><head><meta charset="utf-8"><title>Recorder · spec</title>
 <style>body{margin:0;background:#0b1020;color:#e5e7eb;font:13px/1.6 ui-monospace,Consolas,monospace}
 header{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;background:#111827;color:#9ca3af;font:13px sans-serif;position:sticky;top:0}
-button{cursor:pointer;border:0;border-radius:6px;padding:5px 12px;background:#374151;color:#fff;font:12px sans-serif}
+button{cursor:pointer;border:0;border-radius:6px;padding:5px 10px;background:#374151;color:#fff;font:12px sans-serif;margin-left:4px}
 pre{margin:0;padding:12px 14px;white-space:pre-wrap;word-break:break-word}
+textarea{display:none;width:100%;height:calc(100vh - 46px);box-sizing:border-box;border:0;outline:0;background:#0b1020;color:#e5e7eb;font:13px/1.6 ui-monospace,Consolas,monospace;padding:12px;resize:none}
 .cm{color:#6b7280;font-style:italic}.st{color:#fbbf24}.kw{color:#c084fc}.id{color:#34d399}.fn{color:#60a5fa}</style></head>
-<body><header><b>Generated spec (live)</b><button onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('code').textContent)">Copy</button></header>
-<pre id="code">// Chua co thao tac. Hay thao tac tren cua so trang ben canh...</pre></body></html>`;
+<body><header><b id="title">Generated spec (live)</b><span><button id="btnEdit">✏️ Edit</button><button id="btnSave" style="display:none">💾 Save</button><button id="btnLive" style="display:none">↺ Live</button><button id="btnCopy">Copy</button></span></header>
+<pre id="code">// Chua co thao tac. Hay thao tac tren cua so trang ben canh...</pre>
+<textarea id="codeEdit" spellcheck="false"></textarea>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  $('btnCopy').onclick=function(){try{navigator.clipboard.writeText(window.__editMode?$('codeEdit').value:$('code').textContent);}catch(e){}};
+  $('btnEdit').onclick=function(){window.__editMode=true;$('codeEdit').value=window.__lastCode||$('code').textContent||'';$('code').style.display='none';$('codeEdit').style.display='block';$('btnEdit').style.display='none';$('btnSave').style.display='';$('btnLive').style.display='';$('title').textContent='Edit spec (sua tay) - auto-update tam dung';$('codeEdit').focus();};
+  $('btnSave').onclick=function(){if(window.__saveCode)window.__saveCode($('codeEdit').value);$('title').textContent='Da luu .spec.ts ✔';};
+  $('btnLive').onclick=function(){window.__editMode=false;$('codeEdit').style.display='none';$('code').style.display='block';$('btnSave').style.display='none';$('btnLive').style.display='none';$('btnEdit').style.display='';$('title').textContent='Generated spec (live)';if(window.__resetCode)window.__resetCode();};
+})();
+</script></body></html>`;
+let manualSpec: string | null = null; // code user sua tay -> ghi de generated
 
 // Xep vi tri/kich thuoc 1 cua so (Chromium, qua CDP). Headless thi bo qua.
 async function dock(pg: Page, b: { left: number; top: number; width: number; height: number }): Promise<void> {
@@ -95,7 +107,7 @@ function toSpec(actions: Action[]): string {
 
 async function writeOutput(actions: Action[]): Promise<void> {
   await fs.writeFile(path.join(DIR, `${NAME}.json`), JSON.stringify(actions, null, 2));
-  await fs.writeFile(path.join(DIR, `${NAME}.spec.ts`), toSpec(actions)); // <-- code Playwright sinh san
+  await fs.writeFile(path.join(DIR, `${NAME}.spec.ts`), manualSpec != null ? manualSpec : toSpec(actions)); // manual edit (neu co) > generated
 
   const fragileN = actions.filter((a) => a.fragile).length;
   const L: string[] = [`# Recording: ${NAME}`, '', `Bat dau: ${START_URL}`, '',
@@ -198,9 +210,13 @@ async function main(): Promise<void> {
   // CUA SO RIENG hien code (context rieng -> khong bi recorder chen UI, khong bi ghi)
   const codeCtx = await browser.newContext();
   await codeCtx.addInitScript('window.__name = window.__name || function (f) { return f; };'); // tranh loi __name khi highlight
+  await codeCtx.exposeBinding('__saveCode', async (_s: any, text: string) => { manualSpec = text; await fs.writeFile(path.join(DIR, `${NAME}.spec.ts`), text).catch(() => {}); console.log(`✔ Da luu code sua tay -> ${NAME}.spec.ts`); });
+  await codeCtx.exposeBinding('__resetCode', async () => { manualSpec = null; await renderCode(); }); // ve auto-gen
   const codePage = await codeCtx.newPage();
   await codePage.setContent(CODE_HTML);
   renderCode = () => codePage.evaluate((c: string) => {
+    (window as any).__lastCode = c;
+    if ((window as any).__editMode) return;            // dang sua tay -> khong ghi de
     var html = c.split('\n').map(function (line) {
       var h = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       if (line.replace(/^\s+/, '').indexOf('//') === 0) return '<span class="cm">' + h + '</span>'; // ca dong comment
@@ -262,6 +278,15 @@ async function main(): Promise<void> {
     await page.waitForTimeout(200);
     await page.evaluate(() => (window as any).__shot && (window as any).__shot()); // chup screenshot
     await page.waitForTimeout(300);
+    // Kiem thu SUA CODE truc tiep tren cua so live code
+    await codePage.click('#btnEdit').catch(() => {});
+    await codePage.fill('#codeEdit', '// MANUAL EDIT\n').catch(() => {});
+    await codePage.click('#btnSave').catch(() => {});
+    await page.waitForTimeout(200);
+    const edited = await fs.readFile(path.join(DIR, `${NAME}.spec.ts`), 'utf8').catch(() => '');
+    console.log('EDIT TEST: spec bat dau bang "' + edited.slice(0, 14).replace(/\n/g, ' ') + '"');
+    await codePage.click('#btnLive').catch(() => {}); // ve live -> reset manualSpec
+    await page.waitForTimeout(200);
     // --- Kiem thu: tat Rec -> chuyen trang -> van giu trang thai (khong ghi them) ---
     await page.evaluate(() => (window as any).__recTogglePause && (window as any).__recTogglePause()); // tat Rec
     await page.waitForTimeout(200); // cho state ve Node

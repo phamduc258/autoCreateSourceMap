@@ -105,6 +105,7 @@ RECORD_SELECTORS=css,xpath npm run record -- <url> --name=TC003               # 
   - Nhóm: **Playwright** (`testId·role·placeholder·alt·title·text`) · **CSS** (`#id·[name]·[href]·.class·path`) · **XPath** (`@id·@class·text·path`). Mỗi element ra nhiều biến thể để tự chọn.
 
 **Cửa sổ code riêng:** Node mở 1 context riêng = 1 cửa sổ trình duyệt độc lập (không bị ghi), **dock sát bên phải app**, hiện spec **live + syntax highlight**, cập nhật mỗi thao tác.
+- **Sửa code trực tiếp:** **✏️ Edit** (mở textarea, tạm dừng auto-update) → **💾 Save** (ghi thẳng vào `<name>.spec.ts`, giữ bản sửa tay) → **↺ Live** (về tự sinh). Cơ chế: bindings `__saveCode`/`__resetCode` trên `codeCtx`; khi Edit, `renderCode` check `window.__editMode` để KHÔNG ghi đè; xuất file: `manualSpec` (nếu đã Save) **>** generated.
 
 **Menu chuột phải ("Choose action"):** chuột phải vào 1 element → chọn **Click · Right click · Double click · Hover · Pick locator** → log đúng action đó (chỉ GHI, không thực thi trên trang). Esc/click ngoài để đóng; tắt khi Rec off.
 

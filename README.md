@@ -83,6 +83,7 @@ RECORD_SELECTORS=css,xpath npm run record -- <url> --name=TC003               # 
 **Pick locator = bảng liệt kê MỌI selector:** click element (nút 🎯 hoặc chuột phải → Pick locator) → hiện bảng mọi cách select element đó, mỗi dòng kèm **số khớp + `✓`/`⚠N`/`🔴 mong manh` + "đề xuất"**; **click 1 dòng để dùng** (+ copy). Nhóm: **Playwright** (`testId/role/placeholder/alt/title/text`) · **CSS** (`#id/[name]/[href]/.class/path`) · **XPath** (`@id/@class/text/path`).
 
 **Cửa sổ code riêng** mở **bên phải** app (phủ kín phần còn lại của màn hình): hiện spec **live + syntax highlight**, cập nhật theo từng thao tác.
+- **Sửa trực tiếp:** **✏️ Edit** → ô soạn thảo (auto-update tạm dừng) · **💾 Save** → ghi vào `<name>.spec.ts` (giữ bản sửa tay) · **↺ Live** → về tự sinh · **Copy**.
 
 **Output** `recording/<name>/`:
 - `<name>.spec.ts` — code Playwright **chạy được** (giống codegen).
