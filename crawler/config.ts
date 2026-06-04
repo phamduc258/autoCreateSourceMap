@@ -27,6 +27,9 @@ export interface PageTarget {
   waitFor?: string;
   /** (Tuy chon) Cac action de lo state an. CHI cac action khai bao o day moi duoc click. */
   actions?: ActionStep[];
+  /** (Tuy chon) false = crawl trang nay o che do AN DANH (khong dung session login).
+   *  Dung cho trang public / login / signup. Mac dinh dung session (neu login.enabled=true). */
+  auth?: boolean;
 }
 
 export interface Config {
@@ -45,30 +48,32 @@ export interface Config {
 }
 
 export const config: Config = {
-  baseUrl: process.env.BASE_URL ?? 'https://your-test-site.example.com',
+  baseUrl: process.env.BASE_URL ?? 'https://www.saucedemo.com',
 
+  // saucedemo: dang nhap ngay tai trang goc '/'
   login: {
     enabled: true,
-    url: '/login',
-    userSelector: '#username',
+    url: '/',
+    userSelector: '#user-name',
     passSelector: '#password',
-    submitSelector: 'button[type="submit"]',
-    successSelector: '', // vd: '[data-testid="user-menu"]' hoac 'text=Trang chu'
+    submitSelector: '#login-button',
+    successSelector: '.inventory_list', // xuat hien sau khi login -> /inventory.html
   },
 
-  // Danh sach man hinh can lay DOM. Them bao nhieu tuy y.
   pages: [
-    { id: 'dashboard', url: '/dashboard', waitFor: 'main' },
-
-    // --- Vi du man hinh co action de chup them state an ---
-    // {
-    //   id: 'users',
-    //   url: '/users',
-    //   waitFor: 'table',
-    //   actions: [
-    //     { label: 'Mo modal Them nguoi dung', selector: 'text=Them nguoi dung', type: 'click', captureAs: 'users__add-modal' },
-    //   ],
-    // },
+    // Trang login la PUBLIC -> auth:false de crawl o che do an danh (neu dang login se bi redirect di).
+    { id: 'login-page', url: '/', waitFor: '#login-button', auth: false },
+    {
+      id: 'inventory',
+      url: '/inventory.html',
+      waitFor: '.inventory_list',
+      actions: [
+        { label: 'Mo menu (burger)', selector: '#react-burger-menu-btn', type: 'click', captureAs: 'inventory_menu' },
+        { label: 'Them Backpack vao gio', selector: '#add-to-cart-sauce-labs-backpack', type: 'click', captureAs: 'inventory_added' },
+      ],
+    },
+    { id: 'cart', url: '/cart.html', waitFor: '.cart_contents_container' },
+    { id: 'checkout', url: '/checkout-step-one.html', waitFor: '#first-name' },
   ],
 
   output: 'output',

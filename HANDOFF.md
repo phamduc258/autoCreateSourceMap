@@ -2,96 +2,100 @@
 
 > File tóm tắt để **tiếp tục công việc ở một session Claude khác**.
 > Session mới chỉ cần đọc file này là nắm đủ bối cảnh, không cần đọc lại hội thoại cũ.
-> Ngày tạo: 2026-06-03.
+> Tạo: 2026-06-03 · **Cập nhật: 2026-06-04 (đã chạy thật, demo PASS trên saucedemo).**
 
 ---
 
 ## 1. Mục tiêu
 
-Người dùng là **tester**, đang làm auto test. Muốn: đưa cho Claude **1 file test case** → Claude sinh
-**Playwright test (TypeScript)** với selector chính xác.
+Người dùng là **tester**. Muốn: đưa cho Claude **1 file test case** → Claude sinh **Playwright test (TypeScript)**
+với selector chính xác. Vấn đề cốt lõi: Claude cần "nhìn thấy" **DOM/selector** của từng màn để viết script cho chuẩn.
 
-Vấn đề cốt lõi: Claude cần "nhìn thấy" **DOM/selector** của từng màn hình để viết script cho chuẩn.
+## 2. Ràng buộc
 
-## 2. Ràng buộc (quan trọng)
+- **Không có source code** app. **Không dựng được local.** Chỉ có **test case** + **1 site test chạy qua mạng** (đã deploy).
+- → Preview tích hợp của Claude Code KHÔNG dùng được (chỉ preview dev server local). Dùng **Playwright** (chạy trên máy tester, nối site qua mạng) là đúng.
 
-- **Không có source code** của app.
-- **Không dựng được môi trường local.**
-- Chỉ có: **test case** + **1 site test chạy qua mạng** (môi trường đã deploy).
+## 3. Phương án đã chốt — B: viết tool crawler lấy DOM
 
-→ Hệ quả: bộ **Preview tích hợp của Claude Code KHÔNG dùng được** (nó chỉ preview dev server local).
-Giải pháp đúng là dùng **Playwright** — nó chạy trên máy tester và kết nối tới site test qua mạng,
-nên "không source / không local" hoàn toàn OK (đây đúng là cách E2E test chạy với môi trường deploy).
+| Quyết định | Lựa chọn |
+|---|---|
+| Cách click nút | **Theo cấu hình** — chỉ click action khai báo sẵn cho từng URL (an toàn, không bấm nhầm nút phá hủy) |
+| Lưu gì mỗi màn | **Catalog selector + a11y + ảnh** (sau nâng cấp: output 2 tầng gọn, xem mục 6) |
+| Kiểu đăng nhập | **Form user/mật khẩu** |
 
-## 3. Phương án đã chốt — Phương án B: viết 1 tool crawler lấy DOM
+## 4. TRẠNG THÁI HIỆN TẠI ✅
 
-Tool: cung cấp danh sách URL → đăng nhập nếu cần → truy cập từng trang → quét DOM/selector → lưu lại,
-kèm **mapping DOM ↔ URL ↔ action** để AI đọc.
+- ✅ Đã `npm install` + `npx playwright install chromium` (Node v22.16, Chromium 148).
+- ✅ Crawler **chạy thật OK** trên `https://www.saucedemo.com` — quét 5 màn, verify selector, xuất `output/`.
+- ✅ **Đã demo trọn vòng:** `testcases/TC001-checkout.md` → POM + `tests/checkout.spec.ts` → `npx playwright test` → **1 passed**.
+- ⏳ Chưa cắm **site/test case THẬT** của user (đang dùng saucedemo làm demo).
 
-**3 lựa chọn thiết kế đã chốt (qua hỏi đáp với user):**
-
-| Quyết định | Lựa chọn | Ý nghĩa |
-|---|---|---|
-| Cách click nút | **Theo cấu hình** | Chỉ click các action khai báo sẵn cho từng URL → an toàn nhất, không bấm nhầm nút Xóa/Gửi/Đăng xuất làm hỏng dữ liệu test |
-| Lưu gì mỗi màn | **Catalog + a11y + ảnh** | JSON element + selector ứng viên, accessibility tree, screenshot, HTML đã làm sạch |
-| Kiểu đăng nhập | **Form user/mật khẩu** | Nhập user+pass rồi submit ngay trên site |
-
-## 4. Đã build gì (đã viết code, CHƯA chạy/CHƯA cài deps)
+## 5. Cấu trúc project
 
 ```
 testCase/
-  package.json          # deps: @playwright/test, tsx, typescript, dotenv
-  tsconfig.json
-  .gitignore            # ignore node_modules/, output/, .env
-  .env.example          # mẫu: BASE_URL, TEST_USER, TEST_PASS
-  README.md             # hướng dẫn dùng đầy đủ
   crawler/
-    config.ts           # *** FILE DUY NHẤT USER CẦN SỬA *** — login + danh sách pages + actions
-    crawl.ts            # tool chính: login (lưu storageState) → quét URL → xuất index.json
-    extract.ts          # chạy trong browser: quét element + sinh selector ứng viên
+    config.ts        # *** FILE USER SỬA *** — login + danh sách pages + actions (đang cấu hình cho saucedemo)
+    crawl.ts         # tool chính: login → quét → VERIFY selector → xuất index.md + screens/*.md
+    extract.ts       # chạy trong browser: quét element + sinh DANH SÁCH ứng viên selector
+  output/            # (gitignored) kết quả crawl — xem mục 6
+  testcases/
+    TC001-checkout.md   # test case mẫu (input do người viết)
+  tests/
+    checkout.spec.ts    # test sinh ra (PASS)
+    pages/              # Page Object Model: LoginPage, InventoryPage, CartPage, CheckoutPage
+  playwright.config.ts  # baseURL lấy từ .env, reporter list
+  .env                  # BASE_URL + TEST_USER + TEST_PASS (đang là saucedemo)
+  package.json · tsconfig.json · README.md · .gitignore
 ```
 
-**Logic chính (crawl.ts):**
-1. Đăng nhập 1 lần → lưu `output/.auth/state.json` (tái dùng, khỏi login lại). `npm run relogin` để login lại.
-2. Với mỗi `page` trong config: `goto(url)` → `captureState()`.
-3. `captureState()` lưu: `catalog.json` (element + locator gợi ý), `a11y.yaml`, `dom.html` (đã bỏ script/style), `screenshot.png`.
-4. Chỉ thực hiện các `actions` được khai báo (click/fill) → chụp thêm state ẩn (modal/dropdown), ghi cạnh `from → to`.
-5. Gom tất cả vào **`output/index.json`** = bản đồ states + actions.
+## 6. Cách tool hoạt động (sau nâng cấp)
 
-**Selector ưu tiên (extract.ts):** `data-testid` → `role` + tên → `label`/`placeholder` → `id` (nếu không phải hash tự sinh) → text. Bỏ qua class/id sinh tự động.
+**Luồng (crawl.ts):** login 1 lần (lưu `output/.auth/state.json`, `npm run relogin` để login lại) → mỗi `page` trong config:
+`goto(url)` → quét element → **VERIFY**: mỗi ứng viên locator chạy `count()`, chỉ giữ cái **khớp đúng 1** → chỉ click các `action` khai báo → ghi cạnh `from→to`.
 
-## 5. Trạng thái hiện tại
+**Output 2 tầng (để input cho AI luôn nhỏ):**
+```
+output/
+  index.md          # TẦNG 1 (nhẹ): mỗi màn 1 dòng (id·url·title·#el). AI đọc trước để chọn màn.
+  screens/<id>.md   # TẦNG 2 (gọn): bảng selector 1 màn, 1 dòng/element, ĐÃ verify
+  raw/<id>/         # chi tiết tham khảo: catalog.json · a11y.yaml · dom.html · screenshot.png
+```
+Quy ước trong `screens/*.md`: `✓` khớp đúng 1 · `⚠N` khớp N>1 (cần `.nth()`/`.filter()`/thu hẹp) · `✗0` không khớp.
+Element trùng locator (vd dòng bảng) gộp `(lap xN)`.
 
-- ✅ Code viết xong.
-- ❌ Chưa chạy `npm install` / `npx playwright install` (chờ user đồng ý cài deps).
-- ❌ Chưa có thông tin thật để chạy: **URL site test, tài khoản test, selector login, file test case mẫu**.
+**Selector ưu tiên (extract.ts):** testid (`data-testid`→getByTestId; `data-test`/`data-cy`...→CSS attribute) → role+name → label/placeholder → id (bỏ hash tự sinh) → text. Có quét cả `[data-test*]`/`[data-cy]`/`[data-qa]`.
 
-## 6. Việc cần làm tiếp (cho session mới)
+## 7. Demo đã làm (bằng chứng pipeline chạy được)
 
-1. **Cài deps** (cần user đồng ý):
-   ```bash
-   npm install
-   npx playwright install chromium
-   ```
-2. **Lấy thông tin từ user:** URL site test + 1 tài khoản test + (nếu có) file test case mẫu.
-3. **Điền `.env`** (copy từ `.env.example`) và **sửa `crawler/config.ts`** (login selectors + `pages`).
-   - Nếu chưa biết selector login: đặt tạm `login.enabled=false`, thêm trang login vào `pages`,
-     chạy `npm run crawl`, đọc `output/states/login/catalog.json` để lấy đúng selector → điền lại → bật `enabled=true`.
-4. **Chạy** `npm run crawl` → kiểm tra `output/index.json`. (Đặt `headless:false` để debug trực quan.)
-5. **Verify tool** (lần chạy đầu — code chưa được test): đảm bảo login OK, catalog có element hợp lý.
-6. **Sinh test:** đưa `output/index.json` + 1 test case → sinh `tests/*.spec.ts` theo Page Object Model.
-   Dùng `storageState` để test khỏi login lại; tài khoản để trong `.env`.
+- `crawler/config.ts` cấu hình cho saucedemo: login `#user-name`/`#password`/`#login-button`, successSelector `.inventory_list`;
+  pages: inventory (+2 action: mở burger menu, thêm Backpack), cart, checkout.
+- `.env`: `standard_user` / `secret_sauce`.
+- Test sinh ra dùng đúng locator đã verify (vd `[data-test="add-to-cart-sauce-labs-backpack"]`, `[data-test="shopping-cart-badge"]`, `[data-test="firstName"]`...).
+- → Đây là **template POM** tái dùng cho site thật.
 
-## 7. Lưu ý kỹ thuật
+## 8. Áp dụng cho SITE THẬT — việc cần làm tiếp
 
-- Project dùng ESM (`"type":"module"`) + chạy TS trực tiếp bằng `tsx`.
-- `extract.ts::extractCatalog()` chạy trong context trình duyệt qua `page.evaluate` → chỉ dùng DOM API, không tham chiếu biến ngoài. Nếu `page.evaluate` lỗi serialize, cân nhắc inline hàm vào `crawl.ts`.
-- a11y dùng `locator('body').ariaSnapshot()` (Playwright mới). Nếu bản Playwright quá cũ không có, đổi sang `page.accessibility.snapshot()`.
-- Máy đã có Node v22.16.
+1. Sửa `.env` (URL + tài khoản thật) và `crawler/config.ts` (login selectors thật + danh sách `pages` + `actions`).
+   - Chưa biết selector login? Đặt tạm `login.enabled=false`, thêm trang login vào `pages`, `npm run crawl`, đọc `output/raw/<login>/catalog.json` lấy selector → điền lại → bật `enabled=true`.
+2. `npm run crawl` → kiểm tra `output/index.md` + `screens/*.md` (đặt `headless:false` trong config để xem trực quan).
+3. Sinh test: đưa test case thật + `screens/<màn liên quan>.md` cho Claude → sinh `tests/*.spec.ts` (POM) → `npx playwright test`.
+
+## 9. Lưu ý kỹ thuật + các fix đã áp dụng
+
+- ESM (`"type":"module"`) + chạy TS bằng `tsx`. Import file nội bộ dùng đuôi `.js` (tsx/Playwright tự map sang `.ts`).
+- **Fix đã làm (đừng phá):**
+  - `crawl.ts` có `page.addInitScript('window.__name = ...')` — vá lỗi `__name is not defined` do tsx/esbuild ("keepNames") chèn helper khi serialize hàm cho `page.evaluate`. **Bắt buộc giữ.**
+  - `extract.ts` testid attribute-aware: app dùng `data-test` (không phải `data-testid`) → sinh CSS attribute, vì `getByTestId` mặc định chỉ tìm `data-testid`.
+  - `extract.ts` có quét `[data-test*]`/`[data-cy]`/`[data-qa]` (để bắt cả link giỏ/badge không có href/role).
+  - `<select>` không lấy text các option làm "tên".
+- a11y dùng `locator('body').ariaSnapshot()`. Máy: Node v22.16, Chromium qua Playwright.
 
 ---
 
 ### Prompt gợi ý để mở session mới
 
-> "Đọc file `HANDOFF.md` trong project này và tiếp tục. Đây là URL site test: <...>, tài khoản test: <...>.
-> Hãy cài Playwright, cấu hình rồi chạy thử tool crawler, sau đó sinh Playwright test từ test case mình gửi."
+> "Đọc `HANDOFF.md` trong project này và tiếp tục. Tool crawler + demo trên saucedemo đã chạy PASS rồi.
+> Giờ mình muốn cắm site thật: URL `<...>`, tài khoản `<...>`. Hãy cấu hình `.env` + `crawler/config.ts`,
+> chạy `npm run crawl`, rồi sinh Playwright test từ test case mình gửi (file `<...>`)."

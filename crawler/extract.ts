@@ -1,18 +1,25 @@
 // =============================================================================
-//  Quet element + sinh selector ung vien.
-//  Ham nay chay TRONG trinh duyet (page.evaluate) -> chi dung DOM API,
-//  khong dung bien/import ben ngoai.
+//  Quet element + sinh DANH SACH ung vien selector (theo thu tu uu tien).
+//  Ham nay chay TRONG trinh duyet (page.evaluate) -> chi dung DOM API.
+//  Viec KIEM CHUNG (locator khop dung 1 element) lam o phia Node (crawl.ts),
+//  vi can goi API Playwright getByRole/getByLabel... -> khong lam duoc o day.
 // =============================================================================
+
+export type Candidate =
+  | { type: 'testid'; value: string }
+  | { type: 'role'; role: string; name: string }
+  | { type: 'label'; value: string }
+  | { type: 'placeholder'; value: string }
+  | { type: 'text'; value: string }
+  | { type: 'css'; value: string };
 
 export interface CatalogElement {
   tag: string;
   role: string;
   name: string;
   testid: string | null;
-  id: string | null;
-  attrs: Record<string, string | null>;
-  /** Locator Playwright goi y (uu tien: testid > role+name > label/placeholder > id > text). */
-  suggestedLocator: string;
+  /** Ung vien selector, xep theo do uu tien (testid > role+name > label/placeholder > id > text). */
+  candidates: Candidate[];
 }
 
 export interface Catalog {
@@ -27,9 +34,18 @@ export function extractCatalog(): Catalog {
     'a[href]', 'button', 'input', 'select', 'textarea', 'summary',
     '[role="button"]', '[role="link"]', '[role="tab"]', '[role="menuitem"]',
     '[role="checkbox"]', '[role="radio"]', '[role="switch"]', '[role="combobox"]',
-    '[onclick]', '[contenteditable=""]', '[contenteditable="true"]',
+    '[role="option"]', '[onclick]', '[contenteditable=""]', '[contenteditable="true"]',
     '[tabindex]:not([tabindex="-1"])',
+    // Element duoc gan testid (du khong co href/role) -> thuong la muc tieu test.
+    '[data-testid]', '[data-test]', '[data-test-id]', '[data-cy]', '[data-qa]',
   ].join(',');
+
+  // Role co the dat ten -> hop voi getByRole({name}).
+  const NAMED = new Set(['button', 'link', 'tab', 'menuitem', 'menuitemcheckbox',
+    'menuitemradio', 'checkbox', 'radio', 'switch', 'option', 'treeitem']);
+  // Role hop le khac (co the khong co ten, vd row/cell).
+  const VALID = new Set([...NAMED, 'textbox', 'searchbox', 'combobox', 'spinbutton',
+    'slider', 'row', 'cell', 'columnheader', 'rowheader', 'heading', 'listitem']);
 
   function isVisible(el: Element): boolean {
     const r = el.getBoundingClientRect();
@@ -38,7 +54,7 @@ export function extractCatalog(): Catalog {
     return s.visibility !== 'hidden' && s.display !== 'none' && s.opacity !== '0';
   }
 
-  // Doan chuoi co ve sinh tu dong (hash, css-modules, emotion...) -> khong dung lam selector.
+  // Chuoi co ve sinh tu dong (hash, css-modules, emotion...) -> khong dung lam selector.
   function looksGenerated(s: string): boolean {
     if (!s) return true;
     if (/^(css|sc|jss|emotion|Mui)[-_]/.test(s)) return true;
@@ -47,10 +63,10 @@ export function extractCatalog(): Catalog {
     return false;
   }
 
-  function getTestId(el: Element): string | null {
+  function getTestId(el: Element): { attr: string; value: string } | null {
     for (const a of ['data-testid', 'data-test', 'data-test-id', 'data-cy', 'data-qa']) {
       const v = el.getAttribute(a);
-      if (v) return v;
+      if (v) return { attr: a, value: v };
     }
     return null;
   }
@@ -78,6 +94,7 @@ export function extractCatalog(): Catalog {
     const ph = el.getAttribute('placeholder');
     if (ph) return ph.trim();
 
+    if (el.tagName.toLowerCase() === 'select') return ''; // tranh ghep het text cac option lam "ten"
     const txt = (el as HTMLElement).innerText || el.textContent || '';
     return txt.trim().replace(/\s+/g, ' ').slice(0, 80);
   }
@@ -101,30 +118,42 @@ export function extractCatalog(): Catalog {
     return tag;
   }
 
-  function q(s: string): string {
-    return s.replace(/'/g, "\\'");
-  }
-
-  function suggest(el: Element, testid: string | null, name: string, role: string): string {
-    if (testid) return `getByTestId('${q(testid)}')`;
-
-    const NAMED_ROLES = ['button', 'link', 'tab', 'menuitem', 'checkbox', 'radio', 'switch'];
-    if (name && NAMED_ROLES.includes(role)) {
-      return `getByRole('${role}', { name: '${q(name)}' })`;
-    }
-
+  function buildCandidates(el: Element, testid: { attr: string; value: string } | null, name: string, role: string): Candidate[] {
+    const out: Candidate[] = [];
     const tag = el.tagName.toLowerCase();
-    if (tag === 'input' || tag === 'textarea' || tag === 'select') {
-      const ph = el.getAttribute('placeholder');
-      if (ph) return `getByPlaceholder('${q(ph)}')`;
-      if (name) return `getByLabel('${q(name)}')`;
-      const nm = el.getAttribute('name');
-      if (nm && !looksGenerated(nm)) return `locator('${tag}[name="${nm}"]')`;
+    const isInput = tag === 'input' || tag === 'textarea' || tag === 'select';
+
+    if (testid) {
+      // getByTestId mac dinh dung 'data-testid'. Neu app dung 'data-test'/'data-cy'... -> CSS attribute cho chac.
+      if (testid.attr === 'data-testid') out.push({ type: 'testid', value: testid.value });
+      else out.push({ type: 'css', value: `[${testid.attr}="${testid.value}"]` });
     }
 
-    if (el.id && !looksGenerated(el.id)) return `locator('#${CSS.escape(el.id)}')`;
-    if (name) return `getByText('${q(name)}')`;
-    return `locator('${tag}')`;
+    if (name && NAMED.has(role)) out.push({ type: 'role', role, name });
+
+    if (isInput) {
+      const ph = el.getAttribute('placeholder');
+      if (ph) out.push({ type: 'placeholder', value: ph });
+      if (name) out.push({ type: 'label', value: name });
+      const nm = el.getAttribute('name');
+      if (nm && !looksGenerated(nm)) out.push({ type: 'css', value: `${tag}[name="${nm}"]` });
+    }
+
+    if (name && VALID.has(role) && !NAMED.has(role) && !isInput) {
+      out.push({ type: 'role', role, name });
+    }
+
+    if (el.id && !looksGenerated(el.id)) out.push({ type: 'css', value: `#${CSS.escape(el.id)}` });
+
+    if (name && !isInput && (NAMED.has(role) || tag === 'a' || tag === 'button')) {
+      out.push({ type: 'text', value: name });
+    }
+
+    if (out.length === 0) {
+      if (name) out.push({ type: 'text', value: name });
+      else out.push({ type: 'css', value: tag });
+    }
+    return out;
   }
 
   const seen = new Set<Element>();
@@ -143,16 +172,8 @@ export function extractCatalog(): Catalog {
       tag: el.tagName.toLowerCase(),
       role,
       name,
-      testid,
-      id: el.id && !looksGenerated(el.id) ? el.id : null,
-      attrs: {
-        type: el.getAttribute('type'),
-        name: el.getAttribute('name'),
-        placeholder: el.getAttribute('placeholder'),
-        ariaLabel: el.getAttribute('aria-label'),
-        href: el.getAttribute('href'),
-      },
-      suggestedLocator: suggest(el, testid, name, role),
+      testid: testid ? testid.value : null,
+      candidates: buildCandidates(el, testid, name, role),
     });
   }
 

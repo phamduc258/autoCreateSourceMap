@@ -23,6 +23,7 @@ TEST_PASS=mat_khau
 **b) Sửa `crawler/config.ts`:**
 - `login`: selector của ô user / ô password / nút đăng nhập, và `successSelector` (1 element chỉ xuất hiện sau khi login thành công — để kiểm tra login OK).
 - `pages`: danh sách màn hình cần lấy. Mỗi màn có `id`, `url`, `waitFor`, và (tùy chọn) `actions` để mở modal/dropdown rồi chụp thêm.
+- **Trang public / không cần login:** thêm `auth: false` cho page đó → crawl ở chế độ **ẩn danh** (vd trang login, đăng ký — nếu đã đăng nhập sẽ bị redirect). Cả site public thì đặt `login.enabled = false`.
 
 > 💡 **Chưa biết selector login?** Đặt tạm `login.enabled = false`, thêm trang login vào `pages`
 > (vd `{ id: 'login', url: '/login' }`), chạy `npm run crawl`, rồi mở `output/states/login/catalog.json`
@@ -37,23 +38,25 @@ npm run relogin     # xóa phiên cũ, đăng nhập lại (khi session hết h�
 
 Mẹo debug: đặt `headless: false` trong `config.ts` để xem trình duyệt chạy tận mắt.
 
-## 4. Kết quả (thư mục `output/`)
+## 4. Kết quả — output 2 tầng (để input cho AI luôn nhỏ)
 
 ```
 output/
-  index.json                 # BẢN ĐỒ tổng: states + actions, trỏ tới các file bên dưới
-  states/<id>/
-    catalog.json             # danh sách element + selector ứng viên (testid/role/label...)
-    a11y.yaml                # accessibility tree (role + tên) — rất hợp để viết getByRole
-    dom.html                 # HTML đã làm sạch (bỏ script/style)
-    screenshot.png           # ảnh màn hình
+  index.md                 # TẦNG 1 (nhẹ): mỗi màn 1 dòng — id · url · title · #element. AI luôn nạp được.
+  screens/<id>.md          # TẦNG 2 (gọn): bảng selector của 1 màn, 1 dòng/element, ĐÃ kiểm chứng
+  raw/<id>/                # tham khảo chi tiết (KHÔNG nạp vào AI trừ khi cần)
+    catalog.json · a11y.yaml · dom.html · screenshot.png
 ```
 
-`index.json` mỗi state gồm: `url`, `reachedBy` (action nào dẫn tới), `files`, và `elements`
-(name / role / testid / locator gợi ý sẵn dạng Playwright).
+Mỗi locator trong `screens/<id>.md` đã được **chạy thử trên trang thật** (`count()`):
+- `✓` = khớp **đúng 1** element → dùng an toàn.
+- `⚠N` = khớp N (>1) → cần thu hẹp (`.filter()` / `.nth()` / thêm ngữ cảnh).
+- `✗0` = không khớp (cần xem lại).
+
+Element trùng locator (vd nhiều dòng bảng) được gộp thành 1 dòng `(lap x N)` → tránh phình file.
 
 ## 5. Bước tiếp theo — sinh test
 
-Đưa cho Claude: **`output/index.json` + file test case** → Claude đọc selector từ mapping và sinh
-`tests/*.spec.ts` (Page Object Model). An toàn: tool **chỉ click những action bạn khai báo** trong
-`config.ts`, không tự động bấm nút phá hủy dữ liệu.
+Đưa cho Claude: **`output/index.md` → chọn màn liên quan → `output/screens/<id>.md` + file test case**
+→ Claude đọc selector **đã kiểm chứng** và sinh `tests/*.spec.ts` (Page Object Model), input nhỏ gọn.
+An toàn: tool **chỉ click những action bạn khai báo** trong `config.ts`, không tự bấm nút phá hủy dữ liệu.
