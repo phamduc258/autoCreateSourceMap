@@ -1,3 +1,9 @@
 node_modules/
 output/
 .env
+
+# Artifact tai trinh duyet thu cong (ban cai that nam o cache ms-playwright, khong can trong repo)
+chrome-win64.zip
+chrome-win64/
+chrome-headless-shell-win64.zip
+chrome-headless-shell-win64/

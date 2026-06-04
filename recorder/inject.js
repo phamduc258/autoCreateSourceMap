@@ -8,8 +8,10 @@
 //  *** CUSTOM: sua uniqueCandidates() / findFamily() ben duoi. ***
 // =============================================================================
 (() => {
+  if (window.__recInjected) return; // tranh inject 2 lan (addInitScript + re-inject du phong)
+  window.__recInjected = true;
   const looksGenerated = (s) => !s ||
-    /^(css|sc|jss|emotion|svelte|glamor)[-_]/i.test(s) || // emotion/styled/jss/svelte (KHONG chan Mui-* vi la class on dinh)
+    /^(css|sc|jss|emotion|svelte|glamor|makeStyles)([-_]|\d)/i.test(s) || // jss378 / css-1a2 / sc-xxx (KHONG chan Mui-*)
     /__[a-z0-9]*\d[a-z0-9]*$/i.test(s) ||                 // CSS-modules: Block_el__h4sh (duoi co chu so)
     /[-_][0-9a-f]{5,}($|[-_])/i.test(s) ||                // doan hash hex sau dau gach
     /\d{4,}/.test(s);                                     // >=4 chu so lien tiep
@@ -86,6 +88,66 @@
     }
     return '/' + parts.join('/');
   }
+  // Text LABEL "ben canh" 1 control: di len tung cap, xet anh em TRUOC co text ngan & khong chua control.
+  // Dung cho form custom (id/class doi) -> neo selector theo text label thay vi id/class/vi tri.
+  function fieldLabel(el) {
+    var cur = el;
+    // Di len nhieu cap (input co the nam RAT SAU trong "value cell"); dung som khi gap label.
+    // Cum "label" thuong la ANH EM TRUOC cua cum "value": text ngan, khong chua control nhap lieu.
+    for (var up = 0; up < 12 && cur && cur !== document.body; up++) {
+      var sib = cur.previousElementSibling;
+      while (sib) {
+        var hasCtrl = sib.querySelector && sib.querySelector('input,textarea,select,button,a[href]');
+        var t = (sib.innerText || sib.textContent || '').trim().replace(/\s+/g, ' ');
+        if (t && t.length <= 40 && !hasCtrl) return t;
+        sib = sib.previousElementSibling;
+      }
+      cur = cur.parentElement;
+    }
+    return null;
+  }
+  // String literal an toan cho XPath (xu ly dau nhay " va ').
+  function xpLit(s) {
+    if (s.indexOf('"') < 0) return '"' + s + '"';
+    if (s.indexOf("'") < 0) return "'" + s + "'";
+    return 'concat(' + s.split('"').map(function (p) { return '"' + p + '"'; }).join(",'\"',") + ')';
+  }
+  // Element DAU TIEN khop xpath (de KIEM CHUNG selector co tro dung element vua chon khong).
+  function xfirst(xp) {
+    try { return document.evaluate(xp, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue; } catch (e) { return null; }
+  }
+  // Cac "vung" bao el (modal/dialog/region/id-class on dinh) -> scope selector khi label trung ten o noi khac.
+  // Uu tien tu trong ra: aria-modal/role/aria-label/id-on-dinh/class-on-dinh. (Vung gan el truoc.)
+  function scopeXPaths(el) {
+    var out = [], seen = {}, cur = el.parentElement, n = 0;
+    function add(x) { if (!seen[x]) { seen[x] = 1; out.push(x); } }
+    while (cur && cur !== document.documentElement && n < 60) {
+      n++;
+      var g = function (a) { return cur.getAttribute ? cur.getAttribute(a) : null; };
+      if (g('aria-modal') === 'true') add("//*[@aria-modal='true']");
+      var role = g('role'); if (role) add('//*[@role=' + xpLit(role) + ']');
+      var al = g('aria-label'); if (al && al.length <= 60) add('//*[@aria-label=' + xpLit(al) + ']');
+      if (cur.id && !looksGenerated(cur.id)) add('//*[@id=' + xpLit(cur.id) + ']');
+      var cls = Array.prototype.slice.call(cur.classList || []).filter(function (c) { return !looksGenerated(c); });
+      for (var j = 0; j < cls.length; j++) add("//*[contains(concat(' ',normalize-space(@class),' '),' " + cls[j] + " ')]");
+      cur = cur.parentElement;
+    }
+    return out;
+  }
+  // Selector label-anchored DA KIEM CHUNG tro dung `el`: thu toan trang -> neu trung ten o noi khac
+  // thi scope dan vao modal/vung bao el. Tra null neu khong cach nao tro dung el.
+  function labelAnchored(el, tag, lab) {
+    var lit = xpLit(lab);
+    var tail = '[1]/ancestor-or-self::*[.//' + tag + '][1]/descendant::' + tag + '[1]';
+    var base = '(//*[normalize-space()=' + lit + '])' + tail;
+    if (xfirst(base) === el) return base;
+    var scopes = scopeXPaths(el);
+    for (var i = 0; i < scopes.length; i++) {
+      var s = '(' + scopes[i] + '//*[normalize-space()=' + lit + '])' + tail;
+      if (xfirst(s) === el) return s;
+    }
+    return null;
+  }
 
   // === (1) UNIQUE: cac ung vien tro dung 1 element + so khop (n) ===
   function uniqueCandidates(el) {
@@ -105,6 +167,18 @@
     if (el.id && !looksGenerated(el.id)) out.push({ kind: 'css#id', value: '#' + CSS.escape(el.id), css: '#' + CSS.escape(el.id) });
     const nm = el.getAttribute('name'); if (nm && !looksGenerated(nm)) out.push({ kind: 'css[name]', value: tag + '[name="' + nm + '"]', css: tag + '[name="' + nm + '"]' });
     const href = el.getAttribute('href'); if (href && !/^#|^javascript:/i.test(href)) out.push({ kind: 'css[href]', value: tag + '[href="' + href + '"]', css: tag + '[href="' + href + '"]' });
+    // --- Label-anchored: neo theo TEXT label roi tro sang control ke tiep. Dat SAU #id/[name] on dinh,
+    //     nhung TRUOC .class/positional -> ben cho form custom (id/class doi moi lan).
+    //     Chi cho o nhap TEXT/textarea/select (radio/checkbox da co getByRole lo). ---
+    var itype = (el.getAttribute('type') || '').toLowerCase();
+    var textLike = tag === 'textarea' || tag === 'select' || (tag === 'input' && ['', 'text', 'search', 'email', 'tel', 'url', 'password', 'number'].indexOf(itype) >= 0);
+    if (textLike) {
+      var lab = fieldLabel(el);
+      // Neo TEXT label -> leo LEN cum cha chua control -> di XUONG control. DA KIEM CHUNG tro dung el;
+      // neu label trung ten ngoai modal thi tu scope vao vung/modal bao el. null = bo qua (khong neo duoc).
+      var lx = lab ? labelAnchored(el, tag, lab) : null;
+      if (lx) out.push({ kind: 'label→input', value: lx });
+    }
     if (classes.length) { const cc = tag + '.' + classes.map(function (x) { return CSS.escape(x); }).join('.'); out.push({ kind: 'css.class', value: cc, css: cc }); }
     out.push({ kind: 'cssPath', value: cssPath(el), css: cssPath(el), fragile: true }); // theo vi tri (mong manh)
     // --- XPath (nhieu kieu) ---
@@ -115,7 +189,7 @@
     // --- dem so khop + danh dau ---
     for (const s of out) {
       if (!s.fragile) s.fragile = false;
-      if (s.value.indexOf('//') === 0) s.n = countXpath(s.value);
+      if (/^\(*\//.test(s.value)) s.n = countXpath(s.value); // xpath: bat dau bang / // hoac (// (vd /html.., (//..)[1]/..)
       else if (s.css) s.n = countCss(s.css);
       else if (s.roleName) s.n = countRoleName(role, name);
       else if (s.textName) s.n = countText(name);
@@ -219,14 +293,33 @@
     pickerTarget = el;
     var ttlEl = document.getElementById('__rec_picker_title');
     if (ttlEl) { var lbl = (pickerAction === 'assert' && pendingExtra) ? ('Assert ' + pendingExtra.assert) : ({ click: 'Click', rightclick: 'Right click', dblclick: 'Double click', hover: 'Hover', pick: 'Pick (lay locator)' }[pickerAction] || pickerAction); ttlEl.textContent = 'Chon selector de ' + lbl; }
-    var cands = uniqueCandidates(el);
-    p.querySelector('#__rec_picker_body').innerHTML = cands.map(function (c, i) {
-      var mark = c.fragile ? '🔴 mong manh' : (c.n === 1 ? '✓ duy nhat' : (c.n > 1 ? '⚠ ' + c.n + ' khop' : '✗ 0'));
-      var rec = (!c.fragile && c.n === 1) ? ' · <b style="color:#34d399">de xuat</b>' : '';
+    // === SELECTOR ELEMENT: sort theo DO UY TIN (kind) + SO KHOP (n=1 tot nhat) + tranh fragile ===
+    var TRUST = { testId: 0, 'css#id': 1, 'xpath@id': 1, role: 2, 'label→input': 3, placeholder: 4, label: 4, alt: 4, title: 4, 'css[name]': 5, 'css[href]': 6, text: 7, 'xpath.text': 7, 'css.class': 8, 'xpath@class': 8, cssPath: 9, xpathPath: 9 };
+    var trustOf = function (c) { return TRUST[c.kind] != null ? TRUST[c.kind] : 5; };
+    var penaltyOf = function (c) { return c.n === 1 ? (c.fragile ? 1 : 0) : (c.n > 1 ? 2 : 3); }; // n=1&robust < n=1&fragile < n>1 < n<=0
+    var esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); };
+    var markOf = function (c) { return c.n === 1 ? (c.fragile ? '🔴 1 khop (mong manh)' : '✓ 1 khop') : (c.n > 1 ? '⚠ ' + c.n + ' khop' : (c.n === 0 ? '✗ 0 khop' : '? khong dem duoc')); };
+    var cands = uniqueCandidates(el).slice().sort(function (a, b) { return (penaltyOf(a) * 100 + trustOf(a)) - (penaltyOf(b) * 100 + trustOf(b)); });
+    var bestI = (cands.length && penaltyOf(cands[0]) === 0) ? 0 : -1;
+    var html = '<div style="padding:5px 10px;color:#cbd5e1;font:11px sans-serif;background:#0b1220;border-bottom:1px solid #374151">SELECTOR CHO ELEMENT — sort theo do uy tin &amp; so khop</div>';
+    html += cands.map(function (c, i) {
+      var rec = (i === bestI) ? ' · <b style="color:#34d399">⭐ de xuat</b>' : '';
       return '<div class="__rec_pi" data-i="' + i + '" style="padding:7px 10px;border-radius:5px;cursor:pointer">' +
-        '<span style="color:#9ca3af">[' + c.kind + ']</span> <code style="color:#a7f3d0">' + c.value.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</code>' +
-        '<br><span style="font-size:11px;color:#9ca3af">' + mark + rec + '</span></div>';
+        '<span style="color:#9ca3af">[' + c.kind + ']</span> <code style="color:#a7f3d0">' + esc(c.value) + '</code>' +
+        '<br><span style="font-size:11px;color:#9ca3af">' + markOf(c) + rec + '</span></div>';
     }).join('') || '<div style="padding:8px;color:#9ca3af">Khong co selector</div>';
+    // === SELECTOR FAMILY (nhom item lap) — hien TACH BIET ben duoi ===
+    var fam = findFamily(el);
+    var famReal = (fam && fam.all) ? fam.all.filter(function (c) { return c.kind !== 'tag'; }) : [];
+    if (famReal.length) {
+      html += '<div style="padding:5px 10px;margin-top:4px;color:#fcd34d;font:11px sans-serif;background:#0b1220;border-top:2px solid #4b5563;border-bottom:1px solid #374151">FAMILY — nhom item lap → assertion "co trong list": <code style="color:#fde68a">locator(family).filter({hasText:\'…\'}).&lt;within&gt;</code></div>';
+      html += famReal.map(function (c, j) {
+        return '<div class="__rec_pf" data-f="' + j + '" style="padding:7px 10px;border-radius:5px;cursor:pointer">' +
+          '<span style="color:#fcd34d">[family:' + c.kind + ']</span> <code style="color:#fde68a">' + esc(c.value) + '</code>' +
+          '<br><span style="font-size:11px;color:#9ca3af">' + (c.n >= 2 ? '✓ ' + c.n + ' item' : (c.n + ' item')) + ' · within: <code style="color:#a7f3d0">' + esc(fam.within || ':scope') + '</code> · (click de copy)</span></div>';
+      }).join('');
+    }
+    p.querySelector('#__rec_picker_body').innerHTML = html;
     p.style.display = 'block';
     p.style.left = Math.min(x || 80, innerWidth - p.offsetWidth - 8) + 'px';
     p.style.top = Math.min(y || 80, innerHeight - p.offsetHeight - 8) + 'px';
@@ -234,6 +327,15 @@
       row.addEventListener('mouseenter', function () { row.style.background = '#374151'; });
       row.addEventListener('mouseleave', function () { row.style.background = ''; });
       row.addEventListener('click', function (e) { e.stopPropagation(); choosePicker(cands[+row.getAttribute('data-i')]); });
+    });
+    Array.prototype.forEach.call(p.querySelectorAll('.__rec_pf'), function (row) {
+      row.addEventListener('mouseenter', function () { row.style.background = '#374151'; });
+      row.addEventListener('mouseleave', function () { row.style.background = ''; });
+      row.addEventListener('click', function (e) {
+        e.stopPropagation();
+        try { navigator.clipboard.writeText(famReal[+row.getAttribute('data-f')].value); } catch (x) {}
+        var t = document.getElementById('__rec_picker_title'); if (t) { var o = t.textContent; t.textContent = 'Da copy family selector ✔'; setTimeout(function () { t.textContent = o; }, 900); }
+      });
     });
   }
   function hidePicker() { var p = document.getElementById('__rec_picker'); if (p) p.style.display = 'none'; pickerTarget = null; }
@@ -324,6 +426,14 @@
     document.getElementById('__rec_picker_x').addEventListener('click', function (e) { e.stopPropagation(); hidePicker(); });
     render();
     if (window.__recGetState) window.__recGetState().then(applyState).catch(function () {}); // khoi phuc trang thai sau khi chuyen trang
+    // App SPA hay re-render document.body -> toolbar (con cua body) bi xoa. Tu GAN LAI khi mat.
+    var reattach = function () {
+      if (document.body && ui && !document.getElementById('__rec_ui')) {
+        [ui, hl, tip, box, menu, picker].forEach(function (nd) { if (nd) document.body.appendChild(nd); });
+        render();
+      }
+    };
+    try { new MutationObserver(reattach).observe(document.documentElement, { childList: true, subtree: true }); } catch (e) {}
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ensureUI); else ensureUI();
 

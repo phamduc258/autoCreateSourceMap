@@ -171,12 +171,12 @@ async function login(browser: Browser): Promise<void> {
   console.log('→ Dang nhap...');
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
-  await page.goto(abs(config.login.url), { waitUntil: 'networkidle' });
+  await page.goto(abs(config.login.url), { waitUntil: 'domcontentloaded', timeout: 60_000 });
   await page.fill(config.login.userSelector, process.env.TEST_USER ?? '');
   await page.fill(config.login.passSelector, process.env.TEST_PASS ?? '');
   await page.click(config.login.submitSelector);
   if (config.login.successSelector) await page.waitForSelector(config.login.successSelector, { timeout: 30_000 });
-  else await page.waitForLoadState('networkidle');
+  else await page.waitForLoadState('domcontentloaded');
   await ensureDir(path.dirname(AUTH_FILE));
   await ctx.storageState({ path: AUTH_FILE });
   await ctx.close();
@@ -210,7 +210,10 @@ function indexMd(states: StateInfo[], actions: { from: string; to: string; type:
 
 async function main(): Promise<void> {
   await ensureDir(OUT);
-  const browser = await chromium.launch({ headless: config.headless });
+  // BROWSER_CHANNEL: dung trinh duyet HE THONG ('chrome'/'msedge') thay vi Chromium dong goi.
+  // Can khi ban Chromium dong goi khong tai/khong chay duoc (vd CDN bi chan, hoac loi SxS tren Windows).
+  const CHANNEL = (process.env.BROWSER_CHANNEL || '').trim();
+  const browser = await chromium.launch({ headless: config.headless, ...(CHANNEL ? { channel: CHANNEL } : {}) });
 
   if (config.login.enabled) {
     if (FORCE_LOGIN && (await exists(AUTH_FILE))) await fs.rm(AUTH_FILE);
@@ -247,7 +250,7 @@ async function main(): Promise<void> {
 
     const url = abs(target.url);
     console.log(`→ ${target.id} (${url})${useAuth ? '' : ' [public]'}`);
-    await page.goto(url, { waitUntil: 'networkidle' });
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60_000 });
     if (target.waitFor) await page.waitForSelector(target.waitFor, { timeout: 30_000 }).catch(() => {});
     states.push(await captureState(page, target.id));
 
@@ -255,13 +258,13 @@ async function main(): Promise<void> {
       try {
         if (act.type === 'fill') await page.fill(act.selector, act.value ?? '');
         else await page.click(act.selector);
-        await page.waitForLoadState('networkidle').catch(() => {});
+        await page.waitForLoadState('domcontentloaded').catch(() => {});
 
         if (act.captureAs) {
           states.push(await captureState(page, act.captureAs, [{ from: target.id, action: act.label }]));
           actions.push({ from: target.id, to: act.captureAs, type: act.type ?? 'click', label: act.label, selector: act.selector });
         }
-        await page.goto(url, { waitUntil: 'networkidle' });
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60_000 });
         if (target.waitFor) await page.waitForSelector(target.waitFor, { timeout: 30_000 }).catch(() => {});
       } catch (e) {
         console.warn(`  ⚠ Action "${act.label}" loi: ${(e as Error).message}`);

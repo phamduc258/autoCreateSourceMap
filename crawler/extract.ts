@@ -57,7 +57,7 @@ export function extractCatalog(): Catalog {
   // Chuoi co ve sinh tu dong (hash, css-modules, emotion...) -> khong dung lam selector.
   function looksGenerated(s: string): boolean {
     if (!s) return true;
-    if (/^(css|sc|jss|emotion|svelte|glamor)[-_]/i.test(s)) return true; // KHONG chan Mui-* (class on dinh)
+    if (/^(css|sc|jss|emotion|svelte|glamor|makeStyles)([-_]|\d)/i.test(s)) return true; // jss378/css-1a2/sc-xxx (KHONG chan Mui-*)
     if (/__[a-z0-9]*\d[a-z0-9]*$/i.test(s)) return true;                 // CSS-modules: ...__h4sh
     if (/[-_][0-9a-f]{5,}($|[-_])/i.test(s)) return true;
     if (/\d{4,}/.test(s)) return true;

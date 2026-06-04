@@ -9,6 +9,8 @@ export default defineConfig({
   use: {
     baseURL: process.env.BASE_URL ?? 'https://www.saucedemo.com',
     headless: true,
+    // Dung trinh duyet he thong neu dat BROWSER_CHANNEL (vd 'chrome'/'msedge'); bo trong = Chromium dong goi.
+    channel: process.env.BROWSER_CHANNEL?.trim() || undefined,
     screenshot: 'only-on-failure',
     trace: 'on-first-retry',
   },
