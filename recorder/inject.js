@@ -191,7 +191,7 @@
 
   // ---------- Toolbar day du (giong Playwright codegen) ----------
   // Trang thai: paused (Record on/off), inspect = null|'pick'|'visible'|'text'|'value'
-  let paused = false, inspect = null, codeOpen = false, ui, hl, tip, dragging = null;
+  let paused = false, inspect = null, codeOpen = false, chooseMode = true, ui, hl, tip, dragging = null;
   const isUI = (el) => el && el.closest && (el.closest('#__rec_ui') || el.closest('#__rec_codebox') || el.closest('#__rec_menu') || el.closest('#__rec_picker'));
   window.__recRenderCode = (code) => { const p = document.getElementById('__rec_code'); if (p) p.textContent = code; };
   const bestUnique = (el) => { const c = uniqueCandidates(el); const u = c.find((s) => s.n === 1) || c[0]; return u ? u.value : ''; };
@@ -201,6 +201,7 @@
     if (!ui) return;
     const set = (id, on, col) => { const b = document.getElementById(id); if (b) b.style.background = on ? (col || '#ef4444') : '#374151'; };
     set('__rec_rec', !paused, '#16a34a');
+    set('__rec_choose', chooseMode, '#16a34a');
     set('__rec_pick', inspect === 'pick'); set('__rec_av', inspect === 'visible'); set('__rec_at', inspect === 'text'); set('__rec_aval', inspect === 'value');
     const l = document.getElementById('__rec_lbl');
     if (l) l.textContent = inspect ? ('INSPECT ' + inspect + ': click element · Esc thoat') : (paused ? 'TAM DUNG ghi' : 'dang ghi thao tac');
@@ -211,7 +212,7 @@
   var menuTarget = null, menuX = 0, menuY = 0, pickerTarget = null, pickerAction = 'pick', pendingExtra = null;
   function showMenu(x, y) { var m = document.getElementById('__rec_menu'); if (!m) return; m.style.display = 'block'; m.style.left = Math.min(x, innerWidth - m.offsetWidth - 8) + 'px'; m.style.top = Math.min(y, innerHeight - m.offsetHeight - 8) + 'px'; }
   function hideMenu() { var m = document.getElementById('__rec_menu'); if (m) m.style.display = 'none'; menuTarget = null; }
-  function chooseAction(kind) { var t = menuTarget, mx = menuX, my = menuY; hideMenu(); if (!t) return; pickerAction = kind; pendingExtra = null; showPicker(t, mx, my); } // MOI action deu qua bang chon selector
+  function chooseAction(kind) { var t = menuTarget, mx = menuX, my = menuY; hideMenu(); if (!t) return; if (chooseMode) { pickerAction = kind; pendingExtra = null; showPicker(t, mx, my); } else send(Object.assign({ type: kind }, buildEntry(t))); } // ON: bang chon · OFF: tu dong best
   // PICK LOCATOR: liet ke MOI selector chon duoc element -> user click cai muon dung (va copy)
   function showPicker(el, x, y) {
     var p = document.getElementById('__rec_picker'); if (!p) return;
@@ -244,17 +245,20 @@
     if (act === 'assert' && extra) { a.assert = extra.assert; if (extra.text != null) a.text = extra.text; if (extra.value != null) a.value = extra.value; }
     send(a);
   }
-  function syncState() { try { window.__recSetState && window.__recSetState({ paused: paused, codeOpen: codeOpen, pos: ui ? { left: ui.style.left, top: ui.style.top } : null }); } catch (e) {} }
+  function syncState() { try { window.__recSetState && window.__recSetState({ paused: paused, codeOpen: codeOpen, chooseMode: chooseMode, pos: ui ? { left: ui.style.left, top: ui.style.top } : null }); } catch (e) {} }
   function showCode(v) { codeOpen = v; const b = document.getElementById('__rec_codebox'); if (b) b.style.display = v ? 'block' : 'none'; }
   function applyState(s) {
     if (!s) return;
     paused = !!s.paused;
     if (s.pos && s.pos.left && ui) { ui.style.left = s.pos.left; ui.style.top = s.pos.top; ui.style.transform = 'none'; }
     showCode(!!s.codeOpen);
+    if (typeof s.chooseMode === 'boolean') chooseMode = s.chooseMode;
     if (typeof s.code === 'string') window.__recRenderCode(s.code);
     render();
   }
   function togglePause() { paused = !paused; render(); syncState(); }
+  function setChoose(v) { chooseMode = v; render(); syncState(); } // ON = hien list selector · OFF = tu dong lay best
+  window.__recToggleChoose = () => setChoose(!chooseMode);
   window.__recSetInspect = setInspect;                                        // cho test/keyboard
   window.__recTogglePick = () => setInspect(inspect === 'pick' ? null : 'pick');
   window.__recTogglePause = togglePause;
@@ -267,19 +271,23 @@
     ui.innerHTML =
       '<span id="__rec_drag" title="Keo de di chuyen" style="cursor:move;padding:0 4px;color:#9ca3af">☰</span>' +
       '<button id="__rec_rec"  title="Bat/tat ghi"   style="' + BTN + '">● Rec</button>' +
+      '<button id="__rec_choose" title="ON: hien list selector de chon · OFF: tu dong lay best" style="' + BTN + '">📋 List SL</button>' +
       '<button id="__rec_pick" title="Pick locator"  style="' + BTN + '">🎯 Pick</button>' +
       '<button id="__rec_av"   title="Assert visible" style="' + BTN + '">👁 Visible</button>' +
       '<button id="__rec_at"   title="Assert text"    style="' + BTN + '">🔤 Text</button>' +
       '<button id="__rec_aval" title="Assert value"   style="' + BTN + '">= Value</button>' +
+      '<button id="__rec_shot" title="Chup anh man hinh hien tai" style="' + BTN + '">📷 Shot</button>' +
       '<button id="__rec_code_btn" title="Hien/an code" style="' + BTN + '">&lt;/&gt; Code</button>' +
       '<span id="__rec_lbl" style="margin-left:4px">dang ghi thao tac</span>';
     document.body.appendChild(ui);
     const on = (id, fn) => document.getElementById(id).addEventListener('click', (e) => { e.stopPropagation(); fn(); });
     on('__rec_rec', togglePause);
+    on('__rec_choose', () => setChoose(!chooseMode));
     on('__rec_pick', () => setInspect(inspect === 'pick' ? null : 'pick'));
     on('__rec_av', () => setInspect(inspect === 'visible' ? null : 'visible'));
     on('__rec_at', () => setInspect(inspect === 'text' ? null : 'text'));
     on('__rec_aval', () => setInspect(inspect === 'value' ? null : 'value'));
+    on('__rec_shot', () => { if (window.__shot) window.__shot(); }); // chup screenshot (Node xu ly)
     on('__rec_code_btn', () => { showCode(!codeOpen); syncState(); });
     document.getElementById('__rec_drag').addEventListener('mousedown', (e) => { e.preventDefault(); const r = ui.getBoundingClientRect(); dragging = { dx: e.clientX - r.left, dy: e.clientY - r.top }; });
 
@@ -346,13 +354,17 @@
     if (pk && pk.style.display === 'block' && !isUI(e.target)) { e.preventDefault(); e.stopPropagation(); hidePicker(); return; } // click ngoai -> dong picker
     if (m && m.style.display === 'block' && !isUI(e.target)) { e.preventDefault(); e.stopPropagation(); hideMenu(); return; }     // click ngoai -> dong menu
     if (isUI(e.target)) return;                          // bo qua toolbar/menu/picker
-    if (inspect) {                                       // che do inspect (Pick/Assert tu toolbar) -> MO BANG CHON selector
+    if (inspect) {                                       // che do inspect (Pick/Assert tu toolbar)
       e.preventDefault(); e.stopPropagation();
       var iel = e.target, mode = inspect;
-      if (mode === 'pick') { pickerAction = 'pick'; pendingExtra = null; }
-      else { pickerAction = 'assert'; pendingExtra = { assert: mode }; if (mode === 'text') pendingExtra.text = visibleText(iel); if (mode === 'value') pendingExtra.value = iel.value != null ? iel.value : ''; }
       setInspect(null);
-      showPicker(iel, e.clientX, e.clientY);
+      if (mode === 'pick') {
+        if (chooseMode) { pickerAction = 'pick'; pendingExtra = null; showPicker(iel, e.clientX, e.clientY); }
+        else send(Object.assign({ type: 'pick' }, buildEntry(iel)));            // OFF: tu dong lay best
+      } else {
+        if (chooseMode) { pickerAction = 'assert'; pendingExtra = { assert: mode }; if (mode === 'text') pendingExtra.text = visibleText(iel); if (mode === 'value') pendingExtra.value = iel.value != null ? iel.value : ''; showPicker(iel, e.clientX, e.clientY); }
+        else { var aa = { type: 'assert', assert: mode }; if (mode === 'text') aa.text = visibleText(iel); if (mode === 'value') aa.value = iel.value != null ? iel.value : ''; send(Object.assign(aa, buildEntry(iel))); }
+      }
       return;
     }
     if (paused) return;

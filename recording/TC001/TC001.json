@@ -3,93 +3,101 @@
     "i": 1,
     "type": "navigate",
     "url": "http://127.0.0.1:8000/",
-    "ts": 1780567469489
+    "ts": 1780568526752
+  },
+  {
+    "i": 2,
+    "type": "screenshot",
+    "file": "shots/shot-1.png",
+    "url": "http://127.0.0.1:8000/",
+    "ts": 0
   },
   {
     "url": "http://127.0.0.1:8000/",
-    "ts": 1780567479920,
-    "type": "assert",
-    "chosenKind": "text",
-    "chosenValue": "getByText('Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages', { exact: true })",
-    "tag": "p",
-    "role": "p",
-    "name": "Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages",
+    "ts": 1780568535718,
+    "type": "click",
+    "tag": "a",
+    "role": "link",
+    "name": "🤖 AI Tools ChatGPT, Midjourney, DALL-E, GitHub Copilot - 48 bài học làm chủ AI",
     "unique": {
       "all": [
         {
-          "kind": "text",
-          "value": "getByText('Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages', { exact: true })",
+          "kind": "role",
+          "value": "getByRole('link', { name: '🤖 AI Tools ChatGPT, Midjourney, DALL-E, GitHub Copilot - 48 bài học làm chủ AI' })",
           "fragile": false,
           "n": 1
         },
         {
+          "kind": "text",
+          "value": "getByText('🤖 AI Tools ChatGPT, Midjourney, DALL-E, GitHub Copilot - 48 bài học làm chủ AI', { exact: true })",
+          "fragile": false,
+          "n": 1
+        },
+        {
+          "kind": "css[href]",
+          "value": "a[href=\"http://127.0.0.1:8000/ai-tools\"]",
+          "fragile": false,
+          "n": 2
+        },
+        {
+          "kind": "css.class",
+          "value": "a.course-card",
+          "fragile": false,
+          "n": 32
+        },
+        {
           "kind": "cssPath",
-          "value": "body > section:nth-of-type(1) > div > p",
+          "value": "#courses > div > div > a:nth-of-type(1)",
           "fragile": true,
           "n": 1
         },
         {
+          "kind": "xpath@class",
+          "value": "//a[contains(concat(\" \",normalize-space(@class),\" \"),\" course-card \")]",
+          "fragile": false,
+          "n": 32
+        },
+        {
           "kind": "xpath.text",
-          "value": "//p[normalize-space()=\"Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages\"]",
+          "value": "//a[normalize-space()=\"🤖 AI Tools ChatGPT, Midjourney, DALL-E, GitHub Copilot - 48 bài học làm chủ AI\"]",
           "fragile": false,
           "n": 1
         },
         {
           "kind": "xpathPath",
-          "value": "/html[1]/body[1]/section[1]/div[1]/p[1]",
+          "value": "/html[1]/body[1]/section[2]/div[1]/div[1]/a[1]",
           "fragile": true,
           "n": -1
         }
       ],
-      "best": "getByText('Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages', { exact: true })"
+      "best": "getByRole('link', { name: '🤖 AI Tools ChatGPT, Midjourney, DALL-E, GitHub Copilot - 48 bài học làm chủ AI' })"
     },
-    "family": null,
-    "assert": "visible",
-    "fragile": false,
-    "i": 2
-  },
-  {
-    "url": "http://127.0.0.1:8000/",
-    "ts": 1780567485392,
-    "type": "assert",
-    "chosenKind": "text",
-    "chosenValue": "getByText('Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages', { exact: true })",
-    "tag": "p",
-    "role": "p",
-    "name": "Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages",
-    "unique": {
+    "family": {
+      "count": 32,
       "all": [
         {
-          "kind": "text",
-          "value": "getByText('Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages', { exact: true })",
-          "fragile": false,
-          "n": 1
-        },
-        {
-          "kind": "cssPath",
-          "value": "body > section:nth-of-type(1) > div > p",
-          "fragile": true,
-          "n": 1
-        },
-        {
-          "kind": "xpath.text",
-          "value": "//p[normalize-space()=\"Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages\"]",
-          "fragile": false,
-          "n": 1
-        },
-        {
-          "kind": "xpathPath",
-          "value": "/html[1]/body[1]/section[1]/div[1]/p[1]",
-          "fragile": true,
-          "n": -1
+          "kind": "css",
+          "value": ".course-card",
+          "n": 32
         }
       ],
-      "best": "getByText('Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages', { exact: true })"
+      "within": ":scope",
+      "best": ".course-card"
     },
-    "family": null,
-    "assert": "text",
-    "text": "Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages",
     "fragile": false,
     "i": 3
+  },
+  {
+    "i": 4,
+    "type": "navigate",
+    "url": "http://127.0.0.1:8000/ai-tools",
+    "ts": 1780568535947
+  },
+  {
+    "i": 5,
+    "type": "screenshot",
+    "file": "shots/shot-2.png",
+    "url": "http://127.0.0.1:8000/ai-tools",
+    "ts": 0
   }
 ]

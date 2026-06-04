@@ -97,7 +97,9 @@ RECORD_SELECTORS=css,xpath npm run record -- <url> --name=TC003               # 
 - `<name>.json` — **bản giàu cho Claude**: mỗi action có `unique` (`best` = selector dùng, `all` = MỌI biến thể kèm `n`/`fragile`) + `family` (nhóm item lặp + `within`) → assertion "data có trong list" (`locator.filter({hasText}).<within>`). Action `pick` lưu thêm `chosenKind`/`chosenValue` = selector user đã chọn.
 - `<name>.md` — đọc cho người.
 
-**Toolbar (hiện trong trang khi headed):** ☰ kéo · ● Rec (bật/tắt ghi) · 🎯 Pick locator · 👁 Assert visible · 🔤 Assert text · = Assert value · `</> Code` (panel inline). Assert là 1-lần: click element → log assertion. **Pick → mở BẢNG CHỌN selector** (xem dưới). Esc hủy.
+**Toolbar (hiện trong trang khi headed):** ☰ kéo · ● Rec (bật/tắt ghi) · **📋 List SL** · 🎯 Pick · 👁 Visible · 🔤 Text · = Value · **📷 Shot** · `</> Code`.
+- **📋 List SL** (toggle, mặc định ON): ON = mọi thao tác nhắm element (Pick/Assert/menu chuột phải) **mở bảng chọn selector** để user chọn; OFF = **tự động lấy `best`** (như cũ). Trạng thái giữ qua chuyển trang.
+- **📷 Shot:** chụp **full-page** màn hình hiện tại → `recording/<name>/shots/shot-N.png` (tự ẩn toolbar/overlay khi chụp); log step `screenshot`. Esc hủy inspect/menu/picker.
 
 **Pick locator = bảng liệt kê MỌI cách select:** click element (qua nút 🎯 hoặc chuột phải → Pick locator) → hiện bảng tất cả selector chọn được element đó; mỗi dòng kèm số khớp + `✓ duy nhất`/`⚠N`/`🔴 mong manh` + nhãn "đề xuất". **User click 1 dòng** → dùng selector đó (lưu `pick`) + copy clipboard.
   - Nhóm: **Playwright** (`testId·role·placeholder·alt·title·text`) · **CSS** (`#id·[name]·[href]·.class·path`) · **XPath** (`@id·@class·text·path`). Mỗi element ra nhiều biến thể để tự chọn.
@@ -106,7 +108,7 @@ RECORD_SELECTORS=css,xpath npm run record -- <url> --name=TC003               # 
 
 **Menu chuột phải ("Choose action"):** chuột phải vào 1 element → chọn **Click · Right click · Double click · Hover · Pick locator** → log đúng action đó (chỉ GHI, không thực thi trên trang). Esc/click ngoài để đóng; tắt khi Rec off.
 
-**Type action trong `.json`:** `navigate · click · rightclick · dblclick · hover · fill · select · press · pick · assert(visible/text/value)`. → `toSpec()` map sang `.click()`/`.click({button:'right'})`/`.dblclick()`/`.hover()`/`.fill()`/`expect().toBeVisible()`…
+**Type action trong `.json`:** `navigate · click · rightclick · dblclick · hover · fill · select · press · pick · assert(visible/text/value) · screenshot`. → `toSpec()` map sang `.click()`/`.click({button:'right'})`/`.dblclick()`/`.hover()`/`.fill()`/`expect().toBeVisible()`…
 
 **Độ bền selector (fragile):** ưu tiên neo theo định danh ổn định/nội dung; selector **theo vị trí** (`cssPath`/`xpathPath`) là chốt cuối + gắn 🔴 `fragile`. Cảnh báo "🔴 N action dùng selector mong manh → nên thêm data-testid" hiện ở **console + `.md` (đầu file & trên action) + header `.spec.ts`**. `looksGenerated` loại class tự sinh (emotion/styled/jss/CSS-modules…) nhưng KHÔNG chặn nhầm class ổn định (Mui-*/BEM).
 

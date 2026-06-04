@@ -47,7 +47,7 @@ async function dock(pg: Page, b: { left: number; top: number; width: number; hei
 interface Cand { kind: string; value: string; n?: number; fragile?: boolean; }
 interface Action {
   i: number; type: string; url: string; ts: number;
-  value?: string; key?: string; text?: string; assert?: string; tag?: string; role?: string; name?: string;
+  value?: string; key?: string; text?: string; assert?: string; file?: string; tag?: string; role?: string; name?: string;
   fragile?: boolean; chosenKind?: string; chosenValue?: string;
   unique?: { best?: string; all: Cand[] };
   family?: null | { best?: string; count: number; all: Cand[]; within: string };
@@ -73,6 +73,7 @@ function toSpec(actions: Action[]): string {
       else L.push(`  // -> ${a.url}`);                                                     // dieu huong do click o tren
       continue;
     }
+    if (a.type === 'screenshot') { L.push(`  await page.screenshot({ path: '${a.file}', fullPage: true });`); continue; }
     const t = asLocator(a.unique?.best);
     if (a.type === 'fill') L.push(`  await ${t}.fill('${escStr(a.value)}');`);
     else if (a.type === 'select') L.push(`  await ${t}.selectOption('${escStr(a.value)}');`);
@@ -102,6 +103,7 @@ async function writeOutput(actions: Action[]): Promise<void> {
     '', 'n = so element khop. unique nen n=1. family = nhom item lap (n>=2) -> .filter({hasText}).', ''];
   for (const a of actions) {
     if (a.type === 'navigate') { L.push(`${a.i}. **navigate** -> ${a.url}`); continue; }
+    if (a.type === 'screenshot') { L.push(`${a.i}. **screenshot** -> \`${a.file}\``); continue; }
     let head;
     if (a.type === 'assert') {
       const ex = a.assert === 'text' ? ` "${a.text ?? ''}"` : a.assert === 'value' ? ` = \`${a.value ?? ''}\`` : '';
@@ -129,7 +131,7 @@ async function main(): Promise<void> {
   const actions: Action[] = [];
   let renderCode: () => Promise<unknown> = async () => {}; // cap nhat cua so code (gan that sau khi mo cua so)
   // Trang thai recorder GIU O NODE de khong bi reset khi chuyen trang (Rec on/off, vi tri toolbar)
-  let recState: { paused: boolean; codeOpen?: boolean; pos: { left: string; top: string } | null } = { paused: false, pos: null };
+  let recState: { paused: boolean; codeOpen?: boolean; chooseMode?: boolean; pos: { left: string; top: string } | null } = { paused: false, chooseMode: true, pos: null };
   await ctx.exposeBinding('__recGetState', () => ({ ...recState, code: toSpec(actions) })); // tra ca state + code hien tai
   await ctx.exposeBinding('__recSetState', (_s, p: any) => { recState = { ...recState, ...p }; });
 
@@ -155,6 +157,19 @@ async function main(): Promise<void> {
     console.log(`#${a.i} ${tl}${v}  ${a.unique?.best || ''}${a.fragile ? ' ⚠FRAGILE' : ''}${f}`);
     source.page.evaluate((c: string) => (window as any).__recRenderCode && (window as any).__recRenderCode(c), toSpec(actions)).catch(() => {}); // panel trong trang (neu bat)
     renderCode(); // cua so rieng
+  });
+
+  let shotN = 0;
+  await ctx.exposeBinding('__shot', async (source: any) => {
+    const pg = source.page; shotN += 1; const rel = `shots/shot-${shotN}.png`;
+    await fs.mkdir(path.join(DIR, 'shots'), { recursive: true });
+    const ids = ['__rec_ui', '__rec_codebox', '__rec_menu', '__rec_picker', '__rec_hl', '__rec_tip'];
+    await pg.evaluate((list: string[]) => list.forEach((id) => { const e: any = document.getElementById(id); if (e) { e.__prev = e.style.display; e.style.display = 'none'; } }), ids).catch(() => {}); // an UI recorder
+    await pg.screenshot({ path: path.join(DIR, rel), fullPage: true }).catch(() => {});
+    await pg.evaluate((list: string[]) => list.forEach((id) => { const e: any = document.getElementById(id); if (e) e.style.display = e.__prev || ''; }), ids).catch(() => {}); // hien lai UI
+    actions.push({ i: actions.length + 1, type: 'screenshot', file: rel, url: pg.url(), ts: 0 });
+    renderCode();
+    console.log(`#${actions.length} screenshot -> ${rel}`);
   });
 
   const inject = await fs.readFile(path.join(process.cwd(), 'recorder', 'inject.js'), 'utf8');
@@ -240,6 +255,13 @@ async function main(): Promise<void> {
     await page.click('#__rec_menu [data-k="dblclick"]').catch(() => {});  // chon action -> mo picker
     await page.click('#__rec_picker .__rec_pi').catch(() => {});          // chon selector -> log dblclick
     await page.waitForTimeout(200);
+    // Tat toggle List SL -> action tu dong lay best (KHONG mo picker)
+    await page.evaluate(() => (window as any).__recToggleChoose && (window as any).__recToggleChoose());
+    await page.evaluate(() => { (document.querySelector('[data-test="add-to-cart-sauce-labs-fleece-jacket"]') || document.body).dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 140, clientY: 140 })); });
+    await page.click('#__rec_menu [data-k="click"]').catch(() => {});     // OFF -> log click NGAY, khong picker
+    await page.waitForTimeout(200);
+    await page.evaluate(() => (window as any).__shot && (window as any).__shot()); // chup screenshot
+    await page.waitForTimeout(300);
     // --- Kiem thu: tat Rec -> chuyen trang -> van giu trang thai (khong ghi them) ---
     await page.evaluate(() => (window as any).__recTogglePause && (window as any).__recTogglePause()); // tat Rec
     await page.waitForTimeout(200); // cho state ve Node

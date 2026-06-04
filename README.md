@@ -73,8 +73,10 @@ RECORD_STORAGE=output/.auth/state.json npm run record -- <url> --name=TC002   # 
 RECORD_SELECTORS=css,xpath npm run record -- <url> --name=TC003               # chỉ giữ loại selector này trong 'unique'
 ```
 
-**Toolbar (đầu trang khi headed):** ☰ kéo · **● Rec** (bật/tắt ghi) · **🎯 Pick** locator · **👁 Visible** · **🔤 Text** · **= Value** (assert) · **`</> Code`** (panel inline).
-Assert là 1-lần: click element → log assertion. **Pick → mở bảng chọn selector** (xem dưới). Esc hủy. Rec on/off + vị trí toolbar + cửa sổ code **giữ qua chuyển trang**.
+**Toolbar (đầu trang khi headed):** ☰ kéo · **● Rec** · **📋 List SL** · **🎯 Pick** · **👁 Visible** · **🔤 Text** · **= Value** · **📷 Shot** · **`</> Code`**.
+- **📋 List SL** (toggle, mặc định ON): ON = thao tác nhắm element (Pick/Assert/menu chuột phải) **mở bảng chọn selector**; OFF = **tự động lấy `best`** (như cũ).
+- **📷 Shot:** chụp full-page → `recording/<name>/shots/shot-N.png` (tự ẩn UI khi chụp) + log step `screenshot` (spec sinh `page.screenshot(...)`).
+- Assert/Pick: click element → (List SL ON) bảng chọn / (OFF) auto best. Esc hủy. Rec + List SL + vị trí toolbar + cửa sổ code **giữ qua chuyển trang**.
 
 **Chuột phải vào element** → menu **Choose action** (Click · Right click · Double click · Hover · Pick locator) → log đúng action đó.
 
@@ -86,6 +88,7 @@ Assert là 1-lần: click element → log assertion. **Pick → mở bảng ch�
 - `<name>.spec.ts` — code Playwright **chạy được** (giống codegen).
 - `<name>.json` — bản giàu cho **Claude**: mỗi action có `unique` (`best` = selector dùng, `all` = mọi biến thể kèm `n`/`fragile`) + `family` (nhóm item lặp + `within`) → assertion "data trong list": `locator.filter({ hasText }).<within>`. Action `pick` lưu `chosenKind`/`chosenValue`.
 - `<name>.md` — đọc cho người.
+- `shots/shot-N.png` — ảnh chụp khi bấm 📷 Shot (nếu có).
 
 > **Độ bền selector:** ưu tiên neo theo định danh ổn định/nội dung; selector **theo vị trí** (`cssPath`/`xpathPath`) bị gắn 🔴 *mong manh*. Tool cảnh báo "🔴 N action mong manh → nên thêm data-testid" trong `.md` + header `.spec.ts`. `looksGenerated` loại class tự sinh.
 > Thư mục `recording/` chỉ là **output** → xóa thoải mái, tự tạo lại. (Đừng nhầm với `recorder/` = mã nguồn tool.)
