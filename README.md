@@ -45,7 +45,7 @@ Lệnh này tải **2 thứ**:
 - **Chrome Headless Shell** → dùng cho chế độ **headless** (crawler, `npx playwright test`).
 
 > 🌐 Tải **lỗi/timeout** (CDN bị chặn)? → cài **offline** theo mục **8.2**.
-> 💻 Máy đã có **Google Chrome / Edge**? → có thể **bỏ qua bước này** và dùng trình duyệt hệ thống (đặt `RECORD_CHANNEL`, mục **2** + **8.3**).
+> 💻 Máy đã có **Google Chrome / Edge**? → có thể **bỏ qua bước này** và dùng trình duyệt hệ thống cho mọi công cụ (đặt `BROWSER_CHANNEL=chrome`, mục **2** + **8.3**).
 
 ---
 
@@ -148,7 +148,7 @@ RECORD_CHANNEL=chrome npm run record -- <url> --name=TC004                    # 
 - **📋 List SL** (toggle, mặc định ON): ON = thao tác nhắm element (Pick/Assert/menu chuột phải) **mở bảng chọn selector**; OFF = **tự động lấy `best`** (như cũ).
 - **📷 Shot:** chụp full-page → `recording/<name>/shots/shot-N.png` (tự ẩn UI khi chụp) + log step `screenshot` (spec sinh `page.screenshot(...)`).
 - Assert/Pick: click element → (List SL ON) bảng chọn / (OFF) auto best. Esc hủy. Rec + List SL + vị trí toolbar + cửa sổ code **giữ qua chuyển trang**.
-- Toolbar có **trên cả tab/popup mới** (link `target=_blank`) và **tự gắn lại** nếu app SPA re-render `<body>` làm mất nó (MutationObserver).
+- Toolbar bền trên **tab/popup mới** (link `target=_blank`): recorder **re-inject khi `domcontentloaded`** (phòng `addInitScript` bị miss → khỏi phải F5), có guard chống nhân đôi; và **tự gắn lại** nếu app SPA re-render `<body>` làm mất nó (MutationObserver).
 
 **Chuột phải vào element** → menu **Choose action** (Click · Right click · Double click · Hover · Pick locator) → log đúng action đó.
 

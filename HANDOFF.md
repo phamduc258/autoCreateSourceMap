@@ -1,138 +1,117 @@
 # HANDOFF — Tool lấy DOM để AI sinh Playwright test
 
-> File tóm tắt để **tiếp tục công việc ở một session Claude khác**.
-> Session mới chỉ cần đọc file này là nắm đủ bối cảnh, không cần đọc lại hội thoại cũ.
-> Tạo: 2026-06-03 · **Cập nhật: 2026-06-04 — có 2 tool: (A) Crawler lấy DOM, (B) Recorder kiểu Playwright codegen. Đã chạy thật trên saucedemo.**
+> File tóm tắt để **tiếp tục công việc ở một session Claude khác**. Đọc file này là nắm đủ bối cảnh.
+> Tạo: 2026-06-03 · **Cập nhật: 2026-06-05.**
+> Trạng thái: 2 tool (Crawler + Recorder) chạy được. **Đang cắm SITE THẬT (PORTERS HRBC staging) bằng RECORDER + Chrome hệ thống.**
+> Đọc thêm `README.md` (đã đầy đủ: yêu cầu môi trường, cài đặt, .env, troubleshooting).
 
 ---
 
 ## 1. Mục tiêu
 
-Người dùng là **tester**. Muốn: đưa cho Claude **1 file test case** → Claude sinh **Playwright test (TypeScript)**
-với selector chính xác. Vấn đề cốt lõi: Claude cần "nhìn thấy" **DOM/selector** của từng màn để viết script cho chuẩn.
+Người dùng là **tester**. Muốn: đưa cho Claude **1 file test case** → Claude sinh **Playwright test (TypeScript)** với selector chính xác. Vấn đề cốt lõi: Claude cần "nhìn thấy" **DOM/selector** của từng màn.
 
 ## 2. Ràng buộc
 
-- **Không có source code** app. **Không dựng được local.** Chỉ có **test case** + **1 site test chạy qua mạng** (đã deploy).
-- → Preview tích hợp của Claude Code KHÔNG dùng được (chỉ preview dev server local). Dùng **Playwright** (chạy trên máy tester, nối site qua mạng) là đúng.
+- **Không có source code** app. **Không dựng được local.** Chỉ có **test case** + **site test chạy qua mạng**.
+- **Máy hiện tại (Windows):** ⚠️ `cdn.playwright.dev` **bị chặn** (không tải được Chromium đóng gói) + bản Chromium đóng gói (Chrome for Testing) **lỗi side-by-side (SxS)** khi chạy headed. → **Phải dùng TRÌNH DUYỆT HỆ THỐNG** (Chrome 148 cài sẵn) — xem mục 4 & 10.
 
-## 3. Phương án đã chốt — B: viết tool crawler lấy DOM
+## 3. Phương án đã chốt
 
 | Quyết định | Lựa chọn |
 |---|---|
-| Cách click nút | **Theo cấu hình** — chỉ click action khai báo sẵn cho từng URL (an toàn, không bấm nhầm nút phá hủy) |
-| Lưu gì mỗi màn | **Catalog selector + a11y + ảnh** (sau nâng cấp: output 2 tầng gọn, xem mục 6) |
-| Kiểu đăng nhập | **Form user/mật khẩu** |
+| Crawler click nút | **Theo cấu hình** — chỉ click action khai báo (an toàn) |
+| Lưu mỗi màn | **Output 2 tầng** (index.md + screens/*.md, đã verify) |
+| Đăng nhập | **Form user/mật khẩu** (lưu storageState) |
+| Trình duyệt (máy này) | **Chrome hệ thống** qua `BROWSER_CHANNEL=chrome` (không dùng Chromium đóng gói) |
 
 ## 4. TRẠNG THÁI HIỆN TẠI ✅
 
-- ✅ Đã `npm install` + `npx playwright install chromium` (Node v22.16, Chromium 148).
-- ✅ Crawler **chạy thật OK** trên `https://www.saucedemo.com` — quét 5 màn, verify selector, xuất `output/`.
-- ✅ **Đã demo trọn vòng:** `testcases/TC001-checkout.md` → POM + `tests/checkout.spec.ts` → `npx playwright test` → **1 passed**.
-- ⏳ Chưa cắm **site/test case THẬT** của user (đang dùng saucedemo làm demo).
+- ✅ `npm install` xong. Playwright `^1.49.0` (npm cài **1.60.x**). `package.json` để range, **không ghim** (dùng Chrome hệ thống nên không phụ thuộc browser đóng gói).
+- ✅ **Trình duyệt = Chrome hệ thống cho TẤT CẢ tool.** `.env` có `BROWSER_CHANNEL=chrome` (Chrome 148.0.7778.217 đã cài). Lý do: CDN chặn + bản đóng gói lỗi SxS (xem mục 2). Recorder/crawler/test đều chạy qua Chrome này (headed + headless đều OK), **không cần** `npx playwright install chromium`.
+- ✅ Crawler demo OK trên saucedemo (cũ). Recorder các tính năng đã verify (xem mục 9).
+- 🔄 **ĐANG LÀM — site thật:** PORTERS HRBC staging `https://staging-hrbc-jp.porterscloud.com/index/login`. Dùng **RECORDER** (không phải crawler-config) vì form động. Form `求人` (job) là **SPA custom**: id dạng GUID, class dạng `jssNNN` — **đổi mỗi lần build/run** → selector trực tiếp vào id/class KHÔNG bền → dùng **`label→input`** (neo theo text label, xem mục 9).
 
 ## 5. Cấu trúc project
 
 ```
-testCase/
-  crawler/                  # TOOL A — crawl tự động lấy DOM (config-driven)
-    config.ts               # *** FILE USER SỬA *** — login + pages + actions (đang là saucedemo)
-    crawl.ts                # login → quét → VERIFY selector → xuất index.md + screens/*.md
-    extract.ts              # chạy trong browser: quét element + sinh ứng viên selector
-  recorder/                 # TOOL B — ghi thao tác kiểu codegen (user-driven). Xem mục 9.
-    record.ts               # Node: bindings, sinh code (toSpec), CỬA SỔ code riêng, dock, state
-    inject.js               # chạy trong trang: toolbar + sinh selector unique/family
-  output/                   # (gitignored) kết quả crawl — xem mục 6
-  recording/                # kết quả record: recording/<name>/{<name>.json,.md,.spec.ts} (output, xóa được)
-  testcases/TC001-checkout.md   # test case mẫu (input do người viết)
-  tests/                    # checkout.spec.ts + pages/ (POM: Login/Inventory/Cart/Checkout) — demo PASS
-  playwright.config.ts · .env · package.json · tsconfig.json · README.md · .gitignore
+crawler/                  # TOOL A — crawl tự động theo config
+  config.ts               # *** USER SỬA *** login + pages + actions (đang là saucedemo)
+  crawl.ts                # login → quét → VERIFY count() → xuất index.md + screens/*.md
+  extract.ts              # chạy trong browser: quét element + sinh ứng viên selector
+recorder/                 # TOOL B — ghi thao tác kiểu codegen (xem mục 9)
+  record.ts               # Node: bindings, toSpec/currentSpec, cửa sổ code, dock, state, channel
+  inject.js               # chạy trong trang: toolbar + sinh selector (unique/family/label→input) + picker
+output/                   # (gitignored) kết quả crawl
+recording/<name>/         # kết quả record: {.json, .md, .spec.ts, shots/} (output, xóa được)
+tests/ + testcases/       # demo POM saucedemo (PASS) + test case mẫu
+.env (gitignored)         # BROWSER_CHANNEL=chrome + (tùy) BASE_URL/TEST_USER/TEST_PASS
+playwright.config.ts · package.json · tsconfig.json · README.md · .gitignore
 ```
 
-## 6. Cách tool hoạt động (sau nâng cấp)
+## 6. Crawler (TOOL A) — tóm tắt
 
-**Luồng (crawl.ts):** login 1 lần (lưu `output/.auth/state.json`, `npm run relogin` để login lại) → mỗi `page` trong config:
-`goto(url)` → quét element → **VERIFY**: mỗi ứng viên locator chạy `count()`, chỉ giữ cái **khớp đúng 1** → chỉ click các `action` khai báo → ghi cạnh `from→to`.
+Login 1 lần (lưu `output/.auth/state.json`, `npm run relogin` để login lại) → mỗi `page`: `goto` (**`domcontentloaded`**, không `networkidle`) → quét → **VERIFY** mỗi locator bằng `count()`, giữ cái khớp đúng 1 → chỉ click `action` khai báo. Output 2 tầng: `output/index.md` (mỗi màn 1 dòng) + `output/screens/<id>.md` (bảng selector, `✓`/`⚠N`/`✗0`). Đọc `BROWSER_CHANNEL` để chọn trình duyệt.
 
-**Output 2 tầng (để input cho AI luôn nhỏ):**
-```
-output/
-  index.md          # TẦNG 1 (nhẹ): mỗi màn 1 dòng (id·url·title·#el). AI đọc trước để chọn màn.
-  screens/<id>.md   # TẦNG 2 (gọn): bảng selector 1 màn, 1 dòng/element, ĐÃ verify
-  raw/<id>/         # chi tiết tham khảo: catalog.json · a11y.yaml · dom.html · screenshot.png
-```
-Quy ước trong `screens/*.md`: `✓` khớp đúng 1 · `⚠N` khớp N>1 (cần `.nth()`/`.filter()`/thu hẹp) · `✗0` không khớp.
-Element trùng locator (vd dòng bảng) gộp `(lap xN)`.
+## 7. Demo cũ (bằng chứng pipeline) — saucedemo
 
-**Selector ưu tiên (extract.ts):** testid (`data-testid`→getByTestId; `data-test`/`data-cy`...→CSS attribute) → role+name → label/placeholder → id (bỏ hash tự sinh) → text. Có quét cả `[data-test*]`/`[data-cy]`/`[data-qa]`.
+`crawler/config.ts` cấu hình saucedemo → `npm run crawl` → `output/` → từ `testcases/TC001-checkout.md` sinh `tests/checkout.spec.ts` (POM Login/Inventory/Cart/Checkout) → `npx playwright test` → **1 passed**. Là template POM tái dùng.
 
-## 7. Demo đã làm (bằng chứng pipeline chạy được)
+## 8. SITE THẬT (PORTERS HRBC) — cách làm tiếp
 
-- `crawler/config.ts` cấu hình cho saucedemo: login `#user-name`/`#password`/`#login-button`, successSelector `.inventory_list`;
-  pages: inventory (+2 action: mở burger menu, thêm Backpack), cart, checkout.
-- `.env`: `standard_user` / `secret_sauce`.
-- Test sinh ra dùng đúng locator đã verify (vd `[data-test="add-to-cart-sauce-labs-backpack"]`, `[data-test="shopping-cart-badge"]`, `[data-test="firstName"]`...).
-- → Đây là **template POM** tái dùng cho site thật.
+1. `.env`: `BROWSER_CHANNEL=chrome` (đã có). Site cần login → dùng recorder ghi cả bước login, hoặc tạo storageState rồi `RECORD_STORAGE=...`.
+2. Chạy: `npm run record -- https://staging-hrbc-jp.porterscloud.com/index/login --name=TCxxx`
+3. Thao tác trên Chrome mở ra → recorder ghi. Form custom → mở **🎯 Pick** / để **📋 List SL** ON → chọn selector **`label→input`** (⭐ đề xuất) cho các ô không có testid.
+4. Đóng cửa sổ app (hoặc Ctrl+C) → ra `recording/TCxxx/` → đưa `.json`/`.spec.ts` cho Claude sinh test hoàn chỉnh.
 
-## 8. Áp dụng cho SITE THẬT — việc cần làm tiếp
-
-1. Sửa `.env` (URL + tài khoản thật) và `crawler/config.ts` (login selectors thật + danh sách `pages` + `actions`).
-   - Chưa biết selector login? Đặt tạm `login.enabled=false`, thêm trang login vào `pages`, `npm run crawl`, đọc `output/raw/<login>/catalog.json` lấy selector → điền lại → bật `enabled=true`.
-2. `npm run crawl` → kiểm tra `output/index.md` + `screens/*.md` (đặt `headless:false` trong config để xem trực quan).
-3. Sinh test: đưa test case thật + `screens/<màn liên quan>.md` cho Claude → sinh `tests/*.spec.ts` (POM) → `npx playwright test`.
-
-## 9. TOOL B — Recorder (kiểu Playwright codegen)
-
-User *diễn* test case trên site → recorder ghi lại → sinh selector + code. Bổ sung cho crawler (crawler quét tự động theo config; recorder bắt đúng luồng user thao tác).
+## 9. RECORDER (TOOL B) — đầy đủ tính năng
 
 **Chạy:**
 ```bash
-npm run record -- <url> --name=TC001                  # ghi; kết thúc: ĐÓNG cửa sổ app hoặc Ctrl+C
-RECORD_STORAGE=output/.auth/state.json npm run record -- <url> --name=TC002   # nạp phiên login đã lưu
-RECORD_SELECTORS=css,xpath npm run record -- <url> --name=TC003               # lọc loại selector trong 'unique'
+npm run record -- <url> --name=TC001                 # ĐÓNG cửa sổ app hoặc Ctrl+C để kết thúc
+RECORD_STORAGE=output/.auth/state.json npm run record -- <url> --name=TC002   # login sẵn
+RECORD_TIMEOUT=120000 npm run record -- <url> --name=TC003                    # site rất chậm
 ```
+(Trình duyệt: `.env` `BROWSER_CHANNEL=chrome` → mở Chrome hệ thống, headed.)
 
-**Output:** `recording/<name>/` gồm 3 file:
-- `<name>.spec.ts` — code Playwright **chạy được** (giống codegen; dùng `unique.best`).
-- `<name>.json` — **bản giàu cho Claude**: mỗi action có `unique` (`best` = selector dùng, `all` = MỌI biến thể kèm `n`/`fragile`) + `family` (nhóm item lặp + `within`) → assertion "data có trong list" (`locator.filter({hasText}).<within>`). Action `pick` lưu thêm `chosenKind`/`chosenValue` = selector user đã chọn.
-- `<name>.md` — đọc cho người.
+**Output `recording/<name>/`:** `.spec.ts` (chạy được) · `.json` (bản giàu cho Claude: mỗi action có `unique.best`/`unique.all` + `family`) · `.md` · `shots/`.
 
-**Toolbar (hiện trong trang khi headed):** ☰ kéo · ● Rec (bật/tắt ghi) · **📋 List SL** · 🎯 Pick · 👁 Visible · 🔤 Text · = Value · **📷 Shot** · `</> Code`.
-- **📋 List SL** (toggle, mặc định ON): ON = mọi thao tác nhắm element (Pick/Assert/menu chuột phải) **mở bảng chọn selector** để user chọn; OFF = **tự động lấy `best`** (như cũ). Trạng thái giữ qua chuyển trang.
-- **📷 Shot:** chụp **full-page** màn hình hiện tại → `recording/<name>/shots/shot-N.png` (tự ẩn toolbar/overlay khi chụp); log step `screenshot`. Esc hủy inspect/menu/picker.
+**Toolbar:** ☰ kéo · ● Rec · 📋 List SL (ON = mở bảng chọn selector) · 🎯 Pick · 👁 Visible · 🔤 Text · = Value · 📷 Shot · `</> Code`.
+- **Bền:** có trên **tab/popup mới** (re-inject khi `domcontentloaded`, guard chống nhân đôi) + **tự gắn lại** khi SPA re-render `<body>` (MutationObserver). State giữ qua chuyển trang.
 
-**Pick locator = bảng liệt kê MỌI cách select:** click element (qua nút 🎯 hoặc chuột phải → Pick locator) → hiện bảng tất cả selector chọn được element đó; mỗi dòng kèm số khớp + `✓ duy nhất`/`⚠N`/`🔴 mong manh` + nhãn "đề xuất". **User click 1 dòng** → dùng selector đó (lưu `pick`) + copy clipboard.
-  - Nhóm: **Playwright** (`testId·role·placeholder·alt·title·text`) · **CSS** (`#id·[name]·[href]·.class·path`) · **XPath** (`@id·@class·text·path`). Mỗi element ra nhiều biến thể để tự chọn.
+**Bảng "Pick locator" (đã NÂNG CẤP) — 2 mục tách biệt:**
+- **SELECTOR CHO ELEMENT** — **sort theo độ uy tín + số khớp**: (1) khớp đúng 1 & không mong manh → (2) đúng 1 nhưng positional 🔴 → (3) `⚠N` → (4) không khớp; trong nhóm theo độ tin cậy loại (`testId`>`#id`>`role`>`label→input`>…>`class`>positional). Dòng đầu = **⭐ đề xuất**. Hiện số khớp mỗi dòng. Click để dùng + copy.
+- **FAMILY — nhóm item lặp** (chỉ khi element trong list/bảng): selector cụm item + `within` → assertion "data trong list". Click để copy.
 
-**Cửa sổ code riêng:** Node mở 1 context riêng = 1 cửa sổ trình duyệt độc lập (không bị ghi), **dock sát bên phải app**, hiện spec **live + syntax highlight**, cập nhật mỗi thao tác.
-- **Sửa code trực tiếp:** **✏️ Edit** (mở textarea, tạm dừng auto-update) → **💾 Save** (ghi thẳng vào `<name>.spec.ts`, giữ bản sửa tay) → **↺ Live** (về tự sinh). Cơ chế: bindings `__saveCode`/`__resetCode` trên `codeCtx`; khi Edit, `renderCode` check `window.__editMode` để KHÔNG ghi đè; xuất file: `manualSpec` (nếu đã Save) **>** generated.
+**`label→input` (CỐT LÕI cho form custom id/class đổi):** neo theo TEXT label → leo lên cụm cha chứa control → xuống control:
+`(//*[normalize-space()="<label>"])[1]/ancestor-or-self::*[.//<tag>][1]/descendant::<tag>[1]`. **Tự kiểm chứng** (đánh giá xpath, so `=== el` đúng element vừa chọn); nếu trùng tên ở nơi khác (vd dropdown header ngoài modal) → **tự bọc scope** `aria-modal`/`role`/`aria-label`/`#id` rồi verify lại. Chỉ sinh cho **text/textarea/select** (radio/checkbox dùng `getByRole`).
 
-**Menu chuột phải ("Choose action"):** chuột phải vào 1 element → chọn **Click · Right click · Double click · Hover · Pick locator** → log đúng action đó (chỉ GHI, không thực thi trên trang). Esc/click ngoài để đóng; tắt khi Rec off.
+**Cửa sổ code riêng** (context riêng, dock phải, **`viewport:null`** nên nút không bị cắt):
+- **✏️ Edit** → sửa tay **có syntax highlight** (overlay) · **💾 Save** → ghi file + **về khung hiển thị**, và **thao tác mới ghi sau vẫn NỐI TIẾP** vào bản sửa (chèn trước `});`) · **↺ Live** → bỏ bản sửa, về tự sinh · **Copy**.
 
-**Type action trong `.json`:** `navigate · click · rightclick · dblclick · hover · fill · select · press · pick · assert(visible/text/value) · screenshot`. → `toSpec()` map sang `.click()`/`.click({button:'right'})`/`.dblclick()`/`.hover()`/`.fill()`/`expect().toBeVisible()`…
+**Type action `.json`:** navigate · click · rightclick · dblclick · hover · fill · select · press · pick · assert(visible/text/value) · screenshot.
 
-**Độ bền selector (fragile):** ưu tiên neo theo định danh ổn định/nội dung; selector **theo vị trí** (`cssPath`/`xpathPath`) là chốt cuối + gắn 🔴 `fragile`. Cảnh báo "🔴 N action dùng selector mong manh → nên thêm data-testid" hiện ở **console + `.md` (đầu file & trên action) + header `.spec.ts`**. `looksGenerated` loại class tự sinh (emotion/styled/jss/CSS-modules…) nhưng KHÔNG chặn nhầm class ổn định (Mui-*/BEM).
+**Độ bền selector:** positional (`cssPath`/`xpathPath`) gắn 🔴 *fragile*, cảnh báo trong `.md`/header `.spec.ts`. `looksGenerated` loại class tự sinh **kể cả `jssNNN`/`css-1a2`** (không chặn Mui-*/BEM).
 
-## 10. Lưu ý kỹ thuật + các fix đã áp dụng
+## 10. Lưu ý kỹ thuật + FIX ĐỪNG PHÁ
 
-- ESM (`"type":"module"`) + chạy TS bằng `tsx`. Import file nội bộ dùng đuôi `.js` (tsx/Playwright tự map sang `.ts`).
-- **Fix đã làm (đừng phá):**
-  - `crawl.ts` có `page.addInitScript('window.__name = ...')` — vá lỗi `__name is not defined` do tsx/esbuild ("keepNames") chèn helper khi serialize hàm cho `page.evaluate`. **Bắt buộc giữ.**
-  - `extract.ts` testid attribute-aware: app dùng `data-test` (không phải `data-testid`) → sinh CSS attribute, vì `getByTestId` mặc định chỉ tìm `data-testid`.
-  - `extract.ts` có quét `[data-test*]`/`[data-cy]`/`[data-qa]` (để bắt cả link giỏ/badge không có href/role).
-  - `<select>` không lấy text các option làm "tên".
-- a11y dùng `locator('body').ariaSnapshot()`. Máy: Node v22.16, Chromium qua Playwright.
-
-**Recorder (`recorder/`) — fix ĐỪNG PHÁ:**
-- State (Rec on/off, vị trí toolbar, panel code) giữ ở **Node** (`__recGetState`/`__recSetState`), trang mới khôi phục lại → KHÔNG reset khi chuyển trang.
-- Kết thúc bằng `page.on('close')` (đóng cửa sổ app) / `browser disconnected` / Ctrl+C — **KHÔNG** dùng `page.waitForEvent('close')` (có timeout mặc định 30s → tự dừng).
-- `inject.js` nạp qua `addInitScript({content})` (string) để né `__name`; vẫn shim `window.__name` trong **cả app context lẫn context cửa sổ code** (vì `page.evaluate`/highlight dùng hàm transpiled).
-- Cửa sổ code = **context riêng** (nên KHÔNG bị recorder ghi). Xếp 2 cửa sổ phủ **100%** màn hình: **maximize cửa sổ app qua CDP để ĐO full work-area** (chính xác, KHÔNG đoán scale/DPI — Playwright ép `deviceScaleFactor=1` nên `devicePixelRatio` luôn = 1, đoán sẽ sai), rồi chia: code giữ `availWidth × 0.42`, app lấy phần còn lại. Đổi `0.42` trong `record.ts` để chỉnh độ rộng code.
+- ESM (`"type":"module"`) + chạy TS bằng `tsx`. Import nội bộ dùng đuôi `.js`.
+- **`__name` shim** (`window.__name = ...`) trong các context — vá lỗi tsx/esbuild keepNames khi `page.evaluate`. Giữ.
+- **TRÌNH DUYỆT HỆ THỐNG (quan trọng — máy này không chạy được Chromium đóng gói):**
+  - `record.ts` đọc `RECORD_CHANNEL || BROWSER_CHANNEL`; `crawl.ts` + `playwright.config.ts` đọc `BROWSER_CHANNEL` → truyền `channel` vào launch. `.env` có `BROWSER_CHANNEL=chrome`. **ĐỪNG xoá `.env` / channel.** (Nếu chuyển sang máy tải được Chromium thì bỏ trống là dùng bản đóng gói.)
+  - SxS chỉ ảnh hưởng bản đóng gói chạy headed; headless-shell vẫn chạy. Chi tiết README mục 8.3.
+- **`goto` dùng `domcontentloaded`** (không `load`/`networkidle` — SPA hay treo) + timeout `RECORD_TIMEOUT`/60s + `.catch` (không chết phiên). Đã đổi ở record.ts + crawl.ts.
+- **`label→input` (inject.js):** `fieldLabel()` (đi lên ≤12 cấp, lấy text label ở anh-em-trước) → `labelAnchored()` dựng xpath + **verify `xfirst()===el`** + `scopeXPaths()` (bọc vùng khi trùng tên). Nhận diện xpath ở count (inject.js) và `asLocator` (record.ts) dùng `/^\(*\//`. `KEEP` mặc định có `label→input`.
+- **Picker:** `showPicker()` sort + 2 mục (element/family).
+- **Toolbar bền:** guard `window.__recInjected` (đầu IIFE inject.js); recorder re-inject `p.on('domcontentloaded', () => p.evaluate(inject))` trong `attachNav`; `MutationObserver` cuối `ensureUI` tự gắn lại UI khi mất.
+- **Cửa sổ code:** context riêng (không bị ghi), dock qua CDP (maximize đo work-area), **`viewport:null`** cả app + code context. `currentSpec()` = `manualSpec` + action ghi sau `manualSavePoint` (chèn trước `});`); `renderCode` chỉ skip khi `window.__editMode`.
+- **State recorder** giữ ở Node (`__recGetState`/`__recSetState`). Kết thúc: `page.on('close')` / `browser disconnected` / SIGINT (KHÔNG `waitForEvent('close')`).
+- `extract.ts` (crawler) testid attribute-aware (`data-test`...) + quét `[data-test*]`/`[data-cy]`/`[data-qa]`; `looksGenerated` cũng đã sửa bắt `jssNNN`.
 
 ---
 
-### Prompt gợi ý để mở session mới
+### Prompt gợi ý mở session mới
 
-> "Đọc `HANDOFF.md` trong project này và tiếp tục. Tool crawler + demo trên saucedemo đã chạy PASS rồi.
-> Giờ mình muốn cắm site thật: URL `<...>`, tài khoản `<...>`. Hãy cấu hình `.env` + `crawler/config.ts`,
-> chạy `npm run crawl`, rồi sinh Playwright test từ test case mình gửi (file `<...>`)."
+> "Đọc `HANDOFF.md`. Máy này dùng **Chrome hệ thống** (`.env` `BROWSER_CHANNEL=chrome`) vì CDN Playwright bị chặn + Chromium đóng gói lỗi SxS — đừng đụng vào.
+> Đang dùng **recorder** trên site thật PORTERS HRBC (`https://staging-hrbc-jp.porterscloud.com/...`). Form custom (id/class `jssNNN`/GUID đổi mỗi lần) → dùng selector `label→input`.
+> Mình muốn <ghi test case / màn cần ghi> — chạy `npm run record -- <url> --name=TCxxx`, rồi từ `recording/TCxxx/` sinh Playwright test."
