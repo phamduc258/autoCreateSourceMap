@@ -57,8 +57,9 @@ export function extractCatalog(): Catalog {
   // Chuoi co ve sinh tu dong (hash, css-modules, emotion...) -> khong dung lam selector.
   function looksGenerated(s: string): boolean {
     if (!s) return true;
-    if (/^(css|sc|jss|emotion|Mui)[-_]/.test(s)) return true;
-    if (/[-_][0-9a-f]{6,}($|[-_])/i.test(s)) return true;
+    if (/^(css|sc|jss|emotion|svelte|glamor)[-_]/i.test(s)) return true; // KHONG chan Mui-* (class on dinh)
+    if (/__[a-z0-9]*\d[a-z0-9]*$/i.test(s)) return true;                 // CSS-modules: ...__h4sh
+    if (/[-_][0-9a-f]{5,}($|[-_])/i.test(s)) return true;
     if (/\d{4,}/.test(s)) return true;
     return false;
   }
@@ -96,7 +97,7 @@ export function extractCatalog(): Catalog {
 
     if (el.tagName.toLowerCase() === 'select') return ''; // tranh ghep het text cac option lam "ten"
     const txt = (el as HTMLElement).innerText || el.textContent || '';
-    return txt.trim().replace(/\s+/g, ' ').slice(0, 80);
+    return txt.trim().replace(/\s+/g, ' '); // full text (truoc cat 80 -> text selector khong khop voi text dai)
   }
 
   function getRole(el: Element): string {

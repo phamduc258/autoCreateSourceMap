@@ -3,222 +3,93 @@
     "i": 1,
     "type": "navigate",
     "url": "http://127.0.0.1:8000/",
-    "ts": 1780563496596
+    "ts": 1780567469489
   },
   {
     "url": "http://127.0.0.1:8000/",
-    "ts": 1780563502313,
-    "type": "pick",
-    "tag": "span",
-    "role": "span",
-    "name": "🐍",
+    "ts": 1780567479920,
+    "type": "assert",
+    "chosenKind": "text",
+    "chosenValue": "getByText('Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages', { exact: true })",
+    "tag": "p",
+    "role": "p",
+    "name": "Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages",
     "unique": {
       "all": [
         {
-          "kind": "css",
-          "value": "#courses > div > div > a:nth-of-type(2) > span",
-          "n": 1
-        },
-        {
-          "kind": "xpath",
-          "value": "/html[1]/body[1]/section[2]/div[1]/div[1]/a[2]/span[1]",
-          "n": 1
-        },
-        {
           "kind": "text",
-          "value": "getByText('🐍', { exact: true })",
-          "n": 2
-        }
-      ],
-      "best": "#courses > div > div > a:nth-of-type(2) > span"
-    },
-    "family": {
-      "count": 32,
-      "all": [
+          "value": "getByText('Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages', { exact: true })",
+          "fragile": false,
+          "n": 1
+        },
         {
-          "kind": "css",
-          "value": ".course-card",
-          "n": 32
+          "kind": "cssPath",
+          "value": "body > section:nth-of-type(1) > div > p",
+          "fragile": true,
+          "n": 1
+        },
+        {
+          "kind": "xpath.text",
+          "value": "//p[normalize-space()=\"Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages\"]",
+          "fragile": false,
+          "n": 1
+        },
+        {
+          "kind": "xpathPath",
+          "value": "/html[1]/body[1]/section[1]/div[1]/p[1]",
+          "fragile": true,
+          "n": -1
         }
       ],
-      "within": ".course-icon",
-      "best": ".course-card"
+      "best": "getByText('Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages', { exact: true })"
     },
+    "family": null,
+    "assert": "visible",
+    "fragile": false,
     "i": 2
   },
   {
     "url": "http://127.0.0.1:8000/",
-    "ts": 1780563507686,
-    "type": "dblclick",
-    "tag": "span",
-    "role": "span",
-    "name": "🐍",
+    "ts": 1780567485392,
+    "type": "assert",
+    "chosenKind": "text",
+    "chosenValue": "getByText('Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages', { exact: true })",
+    "tag": "p",
+    "role": "p",
+    "name": "Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages",
     "unique": {
       "all": [
         {
-          "kind": "css",
-          "value": "#courses > div > div > a:nth-of-type(2) > span",
-          "n": 1
-        },
-        {
-          "kind": "xpath",
-          "value": "/html[1]/body[1]/section[2]/div[1]/div[1]/a[2]/span[1]",
-          "n": 1
-        },
-        {
           "kind": "text",
-          "value": "getByText('🐍', { exact: true })",
-          "n": 2
-        }
-      ],
-      "best": "#courses > div > div > a:nth-of-type(2) > span"
-    },
-    "family": {
-      "count": 32,
-      "all": [
+          "value": "getByText('Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages', { exact: true })",
+          "fragile": false,
+          "n": 1
+        },
         {
-          "kind": "css",
-          "value": ".course-card",
-          "n": 32
+          "kind": "cssPath",
+          "value": "body > section:nth-of-type(1) > div > p",
+          "fragile": true,
+          "n": 1
+        },
+        {
+          "kind": "xpath.text",
+          "value": "//p[normalize-space()=\"Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages\"]",
+          "fragile": false,
+          "n": 1
+        },
+        {
+          "kind": "xpathPath",
+          "value": "/html[1]/body[1]/section[1]/div[1]/p[1]",
+          "fragile": true,
+          "n": -1
         }
       ],
-      "within": ".course-icon",
-      "best": ".course-card"
+      "best": "getByText('Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages', { exact: true })"
     },
+    "family": null,
+    "assert": "text",
+    "text": "Nền tảng học tập toàn diện - Programming, Testing, DevOps & Languages",
+    "fragile": false,
     "i": 3
-  },
-  {
-    "url": "http://127.0.0.1:8000/",
-    "ts": 1780563515798,
-    "type": "click",
-    "tag": "a",
-    "role": "link",
-    "name": "🔷 TypeScript TypeScript từ cơ bản đến nâng cao - Type Safet",
-    "unique": {
-      "all": [
-        {
-          "kind": "role",
-          "value": "getByRole('link', { name: '🔷 TypeScript TypeScript từ cơ bản đến nâng cao - Type Safet' })",
-          "n": 1
-        },
-        {
-          "kind": "css",
-          "value": "#courses > div > div > a:nth-of-type(4)",
-          "n": 1
-        },
-        {
-          "kind": "xpath",
-          "value": "/html[1]/body[1]/section[2]/div[1]/div[1]/a[4]",
-          "n": 1
-        },
-        {
-          "kind": "text",
-          "value": "getByText('🔷 TypeScript TypeScript từ cơ bản đến nâng cao - Type Safet', { exact: true })",
-          "n": 0
-        }
-      ],
-      "best": "getByRole('link', { name: '🔷 TypeScript TypeScript từ cơ bản đến nâng cao - Type Safet' })"
-    },
-    "family": {
-      "count": 32,
-      "all": [
-        {
-          "kind": "css",
-          "value": ".course-card",
-          "n": 32
-        }
-      ],
-      "within": ":scope",
-      "best": ".course-card"
-    },
-    "i": 4
-  },
-  {
-    "i": 5,
-    "type": "navigate",
-    "url": "http://127.0.0.1:8000/typescript",
-    "ts": 1780563516049
-  },
-  {
-    "url": "http://127.0.0.1:8000/typescript",
-    "ts": 1780563522070,
-    "type": "click",
-    "tag": "div",
-    "role": "div",
-    "name": "OOP trong TypeScript 8 bai hoc Classes & Objects Access Modi",
-    "unique": {
-      "all": [
-        {
-          "kind": "css",
-          "value": "body > section:nth-of-type(3) > div > div:nth-of-type(2) > div:nth-of-type(2) > div",
-          "n": 1
-        },
-        {
-          "kind": "xpath",
-          "value": "/html[1]/body[1]/section[3]/div[1]/div[2]/div[2]/div[1]",
-          "n": 1
-        },
-        {
-          "kind": "text",
-          "value": "getByText('OOP trong TypeScript 8 bai hoc Classes & Objects Access Modi', { exact: true })",
-          "n": 0
-        }
-      ],
-      "best": "body > section:nth-of-type(3) > div > div:nth-of-type(2) > div:nth-of-type(2) > div"
-    },
-    "family": {
-      "count": 6,
-      "all": [
-        {
-          "kind": "css",
-          "value": ".col-md-6",
-          "n": 6
-        }
-      ],
-      "within": ".section-card",
-      "best": ".col-md-6"
-    },
-    "i": 6
-  },
-  {
-    "url": "http://127.0.0.1:8000/typescript",
-    "ts": 1780563530142,
-    "type": "hover",
-    "tag": "li",
-    "role": "li",
-    "name": "Access Modifiers",
-    "unique": {
-      "all": [
-        {
-          "kind": "css",
-          "value": "body > section:nth-of-type(3) > div > div:nth-of-type(2) > div:nth-of-type(2) > div > ul > li:nth-of-type(2)",
-          "n": 1
-        },
-        {
-          "kind": "xpath",
-          "value": "/html[1]/body[1]/section[3]/div[1]/div[2]/div[2]/div[1]/ul[1]/li[2]",
-          "n": 1
-        },
-        {
-          "kind": "text",
-          "value": "getByText('Access Modifiers', { exact: true })",
-          "n": 1
-        }
-      ],
-      "best": "body > section:nth-of-type(3) > div > div:nth-of-type(2) > div:nth-of-type(2) > div > ul > li:nth-of-type(2)"
-    },
-    "family": {
-      "count": 30,
-      "all": [
-        {
-          "kind": "role",
-          "value": "getByRole('listitem')",
-          "n": 30
-        }
-      ],
-      "within": ":scope",
-      "best": "getByRole('listitem')"
-    },
-    "i": 7
   }
 ]

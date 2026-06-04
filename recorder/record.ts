@@ -23,7 +23,7 @@ const nameArg = process.argv.find((a) => a.startsWith('--name='))?.slice(7);
 const NAME = (nameArg || process.env.RECORD_NAME || 'recording').trim().replace(/[\\/:*?"<>|\s]+/g, '_') || 'recording';
 const DIR = path.join(OUT, NAME); // moi test case 1 folder rieng: recording/<NAME>/
 // === CHO CUSTOM FORMAT: chon loai selector giu lai trong output ===
-const KEEP = (process.env.RECORD_SELECTORS || 'testId,role,placeholder,css,xpath,text').split(',');
+const KEEP = (process.env.RECORD_SELECTORS || 'testId,role,placeholder,alt,title,text,css#id,css[name],css[href],css.class,cssPath,xpath@id,xpath@class,xpath.text,xpathPath').split(',');
 
 // HTML cho CUA SO RIENG hien code (giong panel cua Playwright Inspector)
 const CODE_HTML = `<!doctype html><html><head><meta charset="utf-8"><title>Recorder · spec</title>
@@ -44,10 +44,11 @@ async function dock(pg: Page, b: { left: number; top: number; width: number; hei
   } catch (e) { /* headless / khong ho tro CDP */ }
 }
 
-interface Cand { kind: string; value: string; n?: number; }
+interface Cand { kind: string; value: string; n?: number; fragile?: boolean; }
 interface Action {
   i: number; type: string; url: string; ts: number;
   value?: string; key?: string; text?: string; assert?: string; tag?: string; role?: string; name?: string;
+  fragile?: boolean; chosenKind?: string; chosenValue?: string;
   unique?: { best?: string; all: Cand[] };
   family?: null | { best?: string; count: number; all: Cand[]; within: string };
 }
@@ -61,7 +62,10 @@ function asLocator(best?: string): string {
 }
 // Sinh Playwright spec tu cac action da ghi (dung selector unique.best, giong codegen).
 function toSpec(actions: Action[]): string {
-  const L = [`import { test, expect } from '@playwright/test';`, '', `test('${NAME}', async ({ page }) => {`];
+  const fragileN = actions.filter((a) => a.fragile).length;
+  const L = [`import { test, expect } from '@playwright/test';`, ''];
+  if (fragileN) L.push(`// ⚠ ${fragileN} selector mong manh (positional) — nen thay bang data-testid. Chi tiet o file .md.`, '');
+  L.push(`test('${NAME}', async ({ page }) => {`);
   let gotoDone = false;
   for (const a of actions) {
     if (a.type === 'navigate') {
@@ -92,8 +96,10 @@ async function writeOutput(actions: Action[]): Promise<void> {
   await fs.writeFile(path.join(DIR, `${NAME}.json`), JSON.stringify(actions, null, 2));
   await fs.writeFile(path.join(DIR, `${NAME}.spec.ts`), toSpec(actions)); // <-- code Playwright sinh san
 
+  const fragileN = actions.filter((a) => a.fragile).length;
   const L: string[] = [`# Recording: ${NAME}`, '', `Bat dau: ${START_URL}`, '',
-    'n = so element khop. unique (cho thao tac) nen n=1. family = nhom item lap (n>=2) -> .filter({hasText}) theo data.', ''];
+    fragileN ? `> 🔴 ${fragileN} action dung SELECTOR MONG MANH (positional path) -> nen them data-testid cho element do.` : '> Selector deu on dinh (khong positional). 👍',
+    '', 'n = so element khop. unique nen n=1. family = nhom item lap (n>=2) -> .filter({hasText}).', ''];
   for (const a of actions) {
     if (a.type === 'navigate') { L.push(`${a.i}. **navigate** -> ${a.url}`); continue; }
     let head;
@@ -104,7 +110,7 @@ async function writeOutput(actions: Action[]): Promise<void> {
       const val = a.value != null ? ` = \`${a.value}\`` : a.key ? ` [${a.key}]` : '';
       head = `**${a.type}**${val}`;
     }
-    L.push(`${a.i}. ${head} — ${a.name ? `"${a.name}" ` : ''}(${a.tag})`);
+    L.push(`${a.i}. ${head} — ${a.name ? `"${a.name}" ` : ''}(${a.tag})${a.fragile ? '  🔴 MONG MANH' : ''}`);
     if (a.unique?.best) L.push(`   - unique: \`${a.unique.best}\``);
     for (const s of a.unique?.all || []) L.push(`       . ${s.kind}: \`${s.value}\` (n=${s.n})`);
     if (a.family) {
@@ -131,8 +137,14 @@ async function main(): Promise<void> {
   await ctx.exposeBinding('__record', (source: any, a: any) => {
     if (recState.paused) return;             // Rec off -> khong ghi (ke ca ngay sau redirect)
     if (a.unique?.all) {
-      a.unique.all = a.unique.all.filter((s: Cand) => KEEP.includes(s.kind)); // RECORD_SELECTORS loc 'unique'
-      a.unique.best = (a.unique.all.find((s: Cand) => s.n === 1) || a.unique.all[0])?.value;
+      const win = a.unique.all.find((s: Cand) => s.n === 1) || a.unique.all[0]; // chon TRUOC khi loc hien thi
+      a.unique.best = win?.value;
+      a.fragile = !!win?.fragile;                                               // best la selector positional?
+      a.unique.all = a.unique.all.filter((s: Cand) => KEEP.includes(s.kind));   // RECORD_SELECTORS chi loc HIEN THI
+    }
+    if (a.chosenValue && a.unique) {                                            // user da chon selector trong picker (cho MOI action)
+      a.unique.best = a.chosenValue;
+      a.fragile = a.chosenKind === 'cssPath' || a.chosenKind === 'xpathPath';
     }
     if (a.family?.all) a.family.best = (a.family.all.find((s: Cand) => (s.n ?? 0) >= 2) || a.family.all[0])?.value;
     a.i = actions.length + 1;
@@ -140,7 +152,7 @@ async function main(): Promise<void> {
     const tl = a.type === 'assert' ? `assert:${a.assert}` : a.type;
     const v = a.value != null ? `="${a.value}"` : a.text != null ? `="${a.text}"` : '';
     const f = a.family ? `  | family: ${a.family.best} x${a.family.count}` : '';
-    console.log(`#${a.i} ${tl}${v}  ${a.unique?.best || ''}${f}`);
+    console.log(`#${a.i} ${tl}${v}  ${a.unique?.best || ''}${a.fragile ? ' ⚠FRAGILE' : ''}${f}`);
     source.page.evaluate((c: string) => (window as any).__recRenderCode && (window as any).__recRenderCode(c), toSpec(actions)).catch(() => {}); // panel trong trang (neu bat)
     renderCode(); // cua so rieng
   });
@@ -209,15 +221,24 @@ async function main(): Promise<void> {
     await page.fill('#password', 'secret_sauce');
     await page.click('#login-button');
     await page.waitForLoadState('networkidle');
+    // kiem chung fix full-text: pick footer (text dai) -> ung vien getByText phai LAY DU + khop (khong con ✗0)
+    await page.evaluate(() => { (document.querySelector('.footer_copy') || document.body).dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 10, clientY: 10 })); });
+    await page.click('#__rec_menu [data-k="pick"]').catch(() => {});
+    const ftxt = await page.evaluate(() => { const rows = Array.prototype.slice.call(document.querySelectorAll('#__rec_picker .__rec_pi')); const r = rows.find((x: any) => x.textContent.indexOf('getByText') >= 0); return r ? r.textContent.replace(/\s+/g, ' ').trim() : '(khong co text candidate)'; });
+    console.log('FOOTER TEXT CANDIDATE:', ftxt);
+    await page.click('#__rec_picker_x').catch(() => {});
     await page.click('[data-test="add-to-cart-sauce-labs-backpack"]'); // nut trong list -> kiem thu family
     await page.evaluate(() => (window as any).__recTogglePick && (window as any).__recTogglePick()); // bat Pick mode
-    await page.click('[data-test="add-to-cart-sauce-labs-bike-light"]'); // trong Pick -> log 'pick', KHONG add
+    await page.click('[data-test="add-to-cart-sauce-labs-bike-light"]'); // Pick -> mo BANG CHON selector
+    await page.click('#__rec_picker .__rec_pi'); // chon selector dau tien -> log 'pick'
     await page.evaluate(() => (window as any).__recSetInspect && (window as any).__recSetInspect('visible')); // Assert visible
-    await page.click('.inventory_item_name'); // trong inspect -> log assert visible, KHONG navigate
+    await page.click('.inventory_item_name'); // -> mo picker (chon selector cho assert)
+    await page.click('#__rec_picker .__rec_pi'); // chon selector -> log assert visible
     await page.waitForTimeout(300); // cho binding flush
     // Test menu chuot phai: dispatch contextmenu -> chon "Double click"
     await page.evaluate(() => { (document.querySelector('[data-test="add-to-cart-sauce-labs-onesie"]') || document.body).dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 120, clientY: 120 })); });
-    await page.click('#__rec_menu [data-k="dblclick"]').catch(() => {});
+    await page.click('#__rec_menu [data-k="dblclick"]').catch(() => {});  // chon action -> mo picker
+    await page.click('#__rec_picker .__rec_pi').catch(() => {});          // chon selector -> log dblclick
     await page.waitForTimeout(200);
     // --- Kiem thu: tat Rec -> chuyen trang -> van giu trang thai (khong ghi them) ---
     await page.evaluate(() => (window as any).__recTogglePause && (window as any).__recTogglePause()); // tat Rec

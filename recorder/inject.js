@@ -8,8 +8,11 @@
 //  *** CUSTOM: sua uniqueCandidates() / findFamily() ben duoi. ***
 // =============================================================================
 (() => {
-  const looksGenerated = (s) => !s || /^(css|sc|jss|emotion|Mui)[-_]/.test(s) ||
-    /[-_][0-9a-f]{6,}($|[-_])/i.test(s) || /\d{4,}/.test(s);
+  const looksGenerated = (s) => !s ||
+    /^(css|sc|jss|emotion|svelte|glamor)[-_]/i.test(s) || // emotion/styled/jss/svelte (KHONG chan Mui-* vi la class on dinh)
+    /__[a-z0-9]*\d[a-z0-9]*$/i.test(s) ||                 // CSS-modules: Block_el__h4sh (duoi co chu so)
+    /[-_][0-9a-f]{5,}($|[-_])/i.test(s) ||                // doan hash hex sau dau gach
+    /\d{4,}/.test(s);                                     // >=4 chu so lien tiep
   const q = (s) => (s || '').replace(/'/g, "\\'");
   const countCss = (sel) => { try { return document.querySelectorAll(sel).length; } catch (e) { return -1; } };
   const countXpath = (xp) => {
@@ -43,7 +46,7 @@
     const w = el.closest('label'); if (w && w.textContent) return w.textContent.trim().replace(/\s+/g, ' ');
     const ph = el.getAttribute('placeholder'); if (ph) return ph.trim();
     if (el.tagName.toLowerCase() === 'select') return '';
-    return (el.innerText || el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+    return (el.innerText || el.textContent || '').trim().replace(/\s+/g, ' '); // full text (truoc cat 60 -> getByText/xpath.text exact khong khop)
   }
   function roleOf(el) {
     const r = el.getAttribute('role'); if (r) return r;
@@ -87,21 +90,37 @@
   // === (1) UNIQUE: cac ung vien tro dung 1 element + so khop (n) ===
   function uniqueCandidates(el) {
     const ti = testId(el), name = accName(el), role = roleOf(el);
+    const tag = el.tagName.toLowerCase();
+    const isInput = tag === 'input' || tag === 'textarea' || tag === 'select';
+    const classes = Array.prototype.slice.call(el.classList || []).filter(function (c) { return !looksGenerated(c); });
     const out = [];
+    // --- Playwright getBy* (ben) ---
     if (ti) { const c = '[' + ti.attr + '="' + ti.value + '"]'; out.push({ kind: 'testId', value: ti.attr === 'data-testid' ? "getByTestId('" + q(ti.value) + "')" : c, css: c }); }
-    if (name && ['button', 'link', 'tab', 'menuitem', 'checkbox', 'radio', 'switch', 'option'].includes(role)) out.push({ kind: 'role', value: "getByRole('" + role + "', { name: '" + q(name) + "' })" });
+    if (name && ['button', 'link', 'tab', 'menuitem', 'checkbox', 'radio', 'switch', 'option'].includes(role)) out.push({ kind: 'role', value: "getByRole('" + role + "', { name: '" + q(name) + "' })", roleName: true });
     const ph = el.getAttribute('placeholder'); if (ph) out.push({ kind: 'placeholder', value: "getByPlaceholder('" + q(ph) + "')", css: '[placeholder="' + ph + '"]' });
-    out.push({ kind: 'css', value: cssPath(el) });
-    out.push({ kind: 'xpath', value: xpath(el) });
-    if (name) out.push({ kind: 'text', value: "getByText('" + q(name) + "', { exact: true })" });
+    const alt = el.getAttribute('alt'); if (alt) out.push({ kind: 'alt', value: "getByAltText('" + q(alt) + "')", css: '[alt="' + alt + '"]' });
+    const ttl = el.getAttribute('title'); if (ttl) out.push({ kind: 'title', value: "getByTitle('" + q(ttl) + "')", css: '[title="' + ttl + '"]' });
+    if (name && !isInput) out.push({ kind: 'text', value: "getByText('" + q(name) + "', { exact: true })", textName: true });
+    // --- CSS (nhieu kieu) ---
+    if (el.id && !looksGenerated(el.id)) out.push({ kind: 'css#id', value: '#' + CSS.escape(el.id), css: '#' + CSS.escape(el.id) });
+    const nm = el.getAttribute('name'); if (nm && !looksGenerated(nm)) out.push({ kind: 'css[name]', value: tag + '[name="' + nm + '"]', css: tag + '[name="' + nm + '"]' });
+    const href = el.getAttribute('href'); if (href && !/^#|^javascript:/i.test(href)) out.push({ kind: 'css[href]', value: tag + '[href="' + href + '"]', css: tag + '[href="' + href + '"]' });
+    if (classes.length) { const cc = tag + '.' + classes.map(function (x) { return CSS.escape(x); }).join('.'); out.push({ kind: 'css.class', value: cc, css: cc }); }
+    out.push({ kind: 'cssPath', value: cssPath(el), css: cssPath(el), fragile: true }); // theo vi tri (mong manh)
+    // --- XPath (nhieu kieu) ---
+    if (el.id && !looksGenerated(el.id)) out.push({ kind: 'xpath@id', value: '//' + tag + '[@id="' + el.id + '"]' });
+    if (classes.length) out.push({ kind: 'xpath@class', value: '//' + tag + '[contains(concat(" ",normalize-space(@class)," ")," ' + classes[0] + ' ")]' });
+    if (name && !isInput) out.push({ kind: 'xpath.text', value: '//' + tag + '[normalize-space()="' + name + '"]' });
+    out.push({ kind: 'xpathPath', value: xpath(el), fragile: true }); // tuyet doi theo vi tri (mong manh)
+    // --- dem so khop + danh dau ---
     for (const s of out) {
-      if (s.kind === 'xpath') s.n = countXpath(s.value);
+      if (!s.fragile) s.fragile = false;
+      if (s.value.indexOf('//') === 0) s.n = countXpath(s.value);
       else if (s.css) s.n = countCss(s.css);
-      else if (s.kind === 'css') s.n = countCss(s.value);
-      else if (s.kind === 'role') s.n = countRoleName(role, name);
-      else if (s.kind === 'text') s.n = countText(name);
+      else if (s.roleName) s.n = countRoleName(role, name);
+      else if (s.textName) s.n = countText(name);
       else s.n = -1;
-      delete s.css;
+      delete s.css; delete s.roleName; delete s.textName;
     }
     return out;
   }
@@ -173,7 +192,7 @@
   // ---------- Toolbar day du (giong Playwright codegen) ----------
   // Trang thai: paused (Record on/off), inspect = null|'pick'|'visible'|'text'|'value'
   let paused = false, inspect = null, codeOpen = false, ui, hl, tip, dragging = null;
-  const isUI = (el) => el && el.closest && (el.closest('#__rec_ui') || el.closest('#__rec_codebox') || el.closest('#__rec_menu'));
+  const isUI = (el) => el && el.closest && (el.closest('#__rec_ui') || el.closest('#__rec_codebox') || el.closest('#__rec_menu') || el.closest('#__rec_picker'));
   window.__recRenderCode = (code) => { const p = document.getElementById('__rec_code'); if (p) p.textContent = code; };
   const bestUnique = (el) => { const c = uniqueCandidates(el); const u = c.find((s) => s.n === 1) || c[0]; return u ? u.value : ''; };
   const visibleText = (el) => (el.innerText || el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 80);
@@ -189,10 +208,42 @@
     if (!inspect && hl) { hl.style.display = 'none'; tip.style.display = 'none'; }
   }
   function setInspect(k) { inspect = k; render(); }
-  var menuTarget = null;
+  var menuTarget = null, menuX = 0, menuY = 0, pickerTarget = null, pickerAction = 'pick', pendingExtra = null;
   function showMenu(x, y) { var m = document.getElementById('__rec_menu'); if (!m) return; m.style.display = 'block'; m.style.left = Math.min(x, innerWidth - m.offsetWidth - 8) + 'px'; m.style.top = Math.min(y, innerHeight - m.offsetHeight - 8) + 'px'; }
   function hideMenu() { var m = document.getElementById('__rec_menu'); if (m) m.style.display = 'none'; menuTarget = null; }
-  function chooseAction(kind) { var t = menuTarget; hideMenu(); if (t) send(Object.assign({ type: kind }, buildEntry(t))); } // kind: click/rightclick/dblclick/hover/pick
+  function chooseAction(kind) { var t = menuTarget, mx = menuX, my = menuY; hideMenu(); if (!t) return; pickerAction = kind; pendingExtra = null; showPicker(t, mx, my); } // MOI action deu qua bang chon selector
+  // PICK LOCATOR: liet ke MOI selector chon duoc element -> user click cai muon dung (va copy)
+  function showPicker(el, x, y) {
+    var p = document.getElementById('__rec_picker'); if (!p) return;
+    pickerTarget = el;
+    var ttlEl = document.getElementById('__rec_picker_title');
+    if (ttlEl) { var lbl = (pickerAction === 'assert' && pendingExtra) ? ('Assert ' + pendingExtra.assert) : ({ click: 'Click', rightclick: 'Right click', dblclick: 'Double click', hover: 'Hover', pick: 'Pick (lay locator)' }[pickerAction] || pickerAction); ttlEl.textContent = 'Chon selector de ' + lbl; }
+    var cands = uniqueCandidates(el);
+    p.querySelector('#__rec_picker_body').innerHTML = cands.map(function (c, i) {
+      var mark = c.fragile ? '🔴 mong manh' : (c.n === 1 ? '✓ duy nhat' : (c.n > 1 ? '⚠ ' + c.n + ' khop' : '✗ 0'));
+      var rec = (!c.fragile && c.n === 1) ? ' · <b style="color:#34d399">de xuat</b>' : '';
+      return '<div class="__rec_pi" data-i="' + i + '" style="padding:7px 10px;border-radius:5px;cursor:pointer">' +
+        '<span style="color:#9ca3af">[' + c.kind + ']</span> <code style="color:#a7f3d0">' + c.value.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</code>' +
+        '<br><span style="font-size:11px;color:#9ca3af">' + mark + rec + '</span></div>';
+    }).join('') || '<div style="padding:8px;color:#9ca3af">Khong co selector</div>';
+    p.style.display = 'block';
+    p.style.left = Math.min(x || 80, innerWidth - p.offsetWidth - 8) + 'px';
+    p.style.top = Math.min(y || 80, innerHeight - p.offsetHeight - 8) + 'px';
+    Array.prototype.forEach.call(p.querySelectorAll('.__rec_pi'), function (row) {
+      row.addEventListener('mouseenter', function () { row.style.background = '#374151'; });
+      row.addEventListener('mouseleave', function () { row.style.background = ''; });
+      row.addEventListener('click', function (e) { e.stopPropagation(); choosePicker(cands[+row.getAttribute('data-i')]); });
+    });
+  }
+  function hidePicker() { var p = document.getElementById('__rec_picker'); if (p) p.style.display = 'none'; pickerTarget = null; }
+  function choosePicker(c) {
+    var el = pickerTarget, act = pickerAction, extra = pendingExtra; hidePicker();
+    if (!el || !c) return;
+    try { navigator.clipboard && navigator.clipboard.writeText(c.value); } catch (x) {}
+    var a = Object.assign({ type: act, chosenKind: c.kind, chosenValue: c.value }, buildEntry(el));
+    if (act === 'assert' && extra) { a.assert = extra.assert; if (extra.text != null) a.text = extra.text; if (extra.value != null) a.value = extra.value; }
+    send(a);
+  }
   function syncState() { try { window.__recSetState && window.__recSetState({ paused: paused, codeOpen: codeOpen, pos: ui ? { left: ui.style.left, top: ui.style.top } : null }); } catch (e) {} }
   function showCode(v) { codeOpen = v; const b = document.getElementById('__rec_codebox'); if (b) b.style.display = v ? 'block' : 'none'; }
   function applyState(s) {
@@ -257,6 +308,12 @@
       mi.addEventListener('click', function (e) { e.stopPropagation(); chooseAction(mi.getAttribute('data-k')); });
     });
     document.getElementById('__rec_menu_x').addEventListener('click', function (e) { e.stopPropagation(); hideMenu(); });
+
+    var picker = document.createElement('div'); picker.id = '__rec_picker';
+    picker.style.cssText = 'position:fixed;z-index:2147483647;background:#1f2937;color:#fff;border:1px solid #374151;border-radius:8px;display:none;font:12px sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.55);min-width:420px;max-width:72vw;max-height:60vh;overflow:auto';
+    picker.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#111827;color:#9ca3af;position:sticky;top:0"><span><b id="__rec_picker_title">Chon selector</b> (click de dung + copy)</span><span id="__rec_picker_x" style="cursor:pointer;font-size:16px">×</span></div><div id="__rec_picker_body"></div>';
+    document.body.appendChild(picker);
+    document.getElementById('__rec_picker_x').addEventListener('click', function (e) { e.stopPropagation(); hidePicker(); });
     render();
     if (window.__recGetState) window.__recGetState().then(applyState).catch(function () {}); // khoi phuc trang thai sau khi chuyen trang
   }
@@ -282,23 +339,20 @@
   // ---------- Ghi thao tac ----------
   document.addEventListener('contextmenu', (e) => {       // chuot phai -> menu "Choose action"
     if (paused || isUI(e.target)) return;                 // Rec off / tren UI -> menu trinh duyet binh thuong
-    e.preventDefault(); menuTarget = e.target; showMenu(e.clientX, e.clientY);
+    e.preventDefault(); menuTarget = e.target; menuX = e.clientX; menuY = e.clientY; showMenu(e.clientX, e.clientY);
   }, true);
   document.addEventListener('click', (e) => {
-    var m = document.getElementById('__rec_menu');
-    if (m && m.style.display === 'block' && !isUI(e.target)) { e.preventDefault(); e.stopPropagation(); hideMenu(); return; } // click ngoai -> dong menu, khong ghi
-    if (isUI(e.target)) return;                          // bo qua toolbar/menu
-    if (inspect) {                                       // che do inspect: chan action, log pick/assert
+    var pk = document.getElementById('__rec_picker'), m = document.getElementById('__rec_menu');
+    if (pk && pk.style.display === 'block' && !isUI(e.target)) { e.preventDefault(); e.stopPropagation(); hidePicker(); return; } // click ngoai -> dong picker
+    if (m && m.style.display === 'block' && !isUI(e.target)) { e.preventDefault(); e.stopPropagation(); hideMenu(); return; }     // click ngoai -> dong menu
+    if (isUI(e.target)) return;                          // bo qua toolbar/menu/picker
+    if (inspect) {                                       // che do inspect (Pick/Assert tu toolbar) -> MO BANG CHON selector
       e.preventDefault(); e.stopPropagation();
-      const el = e.target, entry = buildEntry(el);
-      if (inspect === 'pick') send(Object.assign({ type: 'pick' }, entry));
-      else {
-        const a = { type: 'assert', assert: inspect };
-        if (inspect === 'text') a.text = visibleText(el);
-        if (inspect === 'value') a.value = el.value != null ? el.value : '';
-        send(Object.assign(a, entry));
-      }
-      setInspect(null);                                  // 1 lan roi ve che do ghi (giong codegen)
+      var iel = e.target, mode = inspect;
+      if (mode === 'pick') { pickerAction = 'pick'; pendingExtra = null; }
+      else { pickerAction = 'assert'; pendingExtra = { assert: mode }; if (mode === 'text') pendingExtra.text = visibleText(iel); if (mode === 'value') pendingExtra.value = iel.value != null ? iel.value : ''; }
+      setInspect(null);
+      showPicker(iel, e.clientX, e.clientY);
       return;
     }
     if (paused) return;
@@ -309,6 +363,8 @@
     const el = e.target; send(Object.assign({ type: el.tagName.toLowerCase() === 'select' ? 'select' : 'fill', value: el.value }, buildEntry(el)));
   }, true);
   document.addEventListener('keydown', (e) => {
+    var pk = document.getElementById('__rec_picker');
+    if (pk && pk.style.display === 'block') { if (e.key === 'Escape') { e.preventDefault(); hidePicker(); } return; }
     var mn = document.getElementById('__rec_menu');
     if (mn && mn.style.display === 'block') { if (e.key === 'Escape') { e.preventDefault(); hideMenu(); } return; }
     if (inspect) { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setInspect(null); } return; }
