@@ -1,0 +1,379 @@
+[
+  {
+    "i": 1,
+    "type": "navigate",
+    "url": "https://www.saucedemo.com/",
+    "ts": 1780563194226
+  },
+  {
+    "url": "https://www.saucedemo.com/",
+    "ts": 1780563194805,
+    "type": "fill",
+    "value": "standard_user",
+    "tag": "input",
+    "role": "textbox",
+    "name": "Username",
+    "unique": {
+      "all": [
+        {
+          "kind": "testId",
+          "value": "[data-test=\"username\"]",
+          "n": 1
+        },
+        {
+          "kind": "placeholder",
+          "value": "getByPlaceholder('Username')",
+          "n": 1
+        },
+        {
+          "kind": "css",
+          "value": "#user-name",
+          "n": 1
+        },
+        {
+          "kind": "xpath",
+          "value": "//*[@data-test='username']",
+          "n": 1
+        },
+        {
+          "kind": "text",
+          "value": "getByText('Username', { exact: true })",
+          "n": 0
+        }
+      ],
+      "best": "[data-test=\"username\"]"
+    },
+    "family": {
+      "count": 2,
+      "all": [
+        {
+          "kind": "css",
+          "value": ".form_group",
+          "n": 2
+        }
+      ],
+      "within": ".input_error",
+      "best": ".form_group"
+    },
+    "i": 2
+  },
+  {
+    "url": "https://www.saucedemo.com/",
+    "ts": 1780563194852,
+    "type": "fill",
+    "value": "secret_sauce",
+    "tag": "input",
+    "role": "textbox",
+    "name": "Password",
+    "unique": {
+      "all": [
+        {
+          "kind": "testId",
+          "value": "[data-test=\"password\"]",
+          "n": 1
+        },
+        {
+          "kind": "placeholder",
+          "value": "getByPlaceholder('Password')",
+          "n": 1
+        },
+        {
+          "kind": "css",
+          "value": "#password",
+          "n": 1
+        },
+        {
+          "kind": "xpath",
+          "value": "//*[@data-test='password']",
+          "n": 1
+        },
+        {
+          "kind": "text",
+          "value": "getByText('Password', { exact: true })",
+          "n": 0
+        }
+      ],
+      "best": "[data-test=\"password\"]"
+    },
+    "family": {
+      "count": 2,
+      "all": [
+        {
+          "kind": "css",
+          "value": ".form_group",
+          "n": 2
+        }
+      ],
+      "within": ".input_error",
+      "best": ".form_group"
+    },
+    "i": 3
+  },
+  {
+    "url": "https://www.saucedemo.com/",
+    "ts": 1780563194853,
+    "type": "click",
+    "tag": "input",
+    "role": "button",
+    "name": "",
+    "unique": {
+      "all": [
+        {
+          "kind": "testId",
+          "value": "[data-test=\"login-button\"]",
+          "n": 1
+        },
+        {
+          "kind": "css",
+          "value": "#login-button",
+          "n": 1
+        },
+        {
+          "kind": "xpath",
+          "value": "//*[@data-test='login-button']",
+          "n": 1
+        }
+      ],
+      "best": "[data-test=\"login-button\"]"
+    },
+    "family": {
+      "count": 26,
+      "all": [
+        {
+          "kind": "tag",
+          "value": "div",
+          "n": 26
+        }
+      ],
+      "within": ".login_container > .login_wrapper > .login_wrapper-inner > .form_column > .login-box > form > .submit-button",
+      "best": "div"
+    },
+    "i": 4
+  },
+  {
+    "i": 5,
+    "type": "navigate",
+    "url": "https://www.saucedemo.com/inventory.html",
+    "ts": 1780563194857
+  },
+  {
+    "url": "https://www.saucedemo.com/inventory.html",
+    "ts": 1780563197051,
+    "type": "click",
+    "tag": "button",
+    "role": "button",
+    "name": "Add to cart",
+    "unique": {
+      "all": [
+        {
+          "kind": "testId",
+          "value": "[data-test=\"add-to-cart-sauce-labs-backpack\"]",
+          "n": 1
+        },
+        {
+          "kind": "role",
+          "value": "getByRole('button', { name: 'Add to cart' })",
+          "n": 6
+        },
+        {
+          "kind": "css",
+          "value": "#add-to-cart-sauce-labs-backpack",
+          "n": 1
+        },
+        {
+          "kind": "xpath",
+          "value": "//*[@data-test='add-to-cart-sauce-labs-backpack']",
+          "n": 1
+        },
+        {
+          "kind": "text",
+          "value": "getByText('Add to cart', { exact: true })",
+          "n": 6
+        }
+      ],
+      "best": "[data-test=\"add-to-cart-sauce-labs-backpack\"]"
+    },
+    "family": {
+      "count": 6,
+      "all": [
+        {
+          "kind": "css",
+          "value": ".inventory_item",
+          "n": 6
+        },
+        {
+          "kind": "testId",
+          "value": "[data-test=\"inventory-item\"]",
+          "n": 6
+        }
+      ],
+      "within": "getByRole('button', { name: 'Add to cart' })",
+      "best": ".inventory_item"
+    },
+    "i": 6
+  },
+  {
+    "url": "https://www.saucedemo.com/inventory.html",
+    "ts": 1780563197086,
+    "type": "pick",
+    "tag": "button",
+    "role": "button",
+    "name": "Add to cart",
+    "unique": {
+      "all": [
+        {
+          "kind": "testId",
+          "value": "[data-test=\"add-to-cart-sauce-labs-bike-light\"]",
+          "n": 1
+        },
+        {
+          "kind": "role",
+          "value": "getByRole('button', { name: 'Add to cart' })",
+          "n": 5
+        },
+        {
+          "kind": "css",
+          "value": "#add-to-cart-sauce-labs-bike-light",
+          "n": 1
+        },
+        {
+          "kind": "xpath",
+          "value": "//*[@data-test='add-to-cart-sauce-labs-bike-light']",
+          "n": 1
+        },
+        {
+          "kind": "text",
+          "value": "getByText('Add to cart', { exact: true })",
+          "n": 5
+        }
+      ],
+      "best": "[data-test=\"add-to-cart-sauce-labs-bike-light\"]"
+    },
+    "family": {
+      "count": 6,
+      "all": [
+        {
+          "kind": "css",
+          "value": ".inventory_item",
+          "n": 6
+        },
+        {
+          "kind": "testId",
+          "value": "[data-test=\"inventory-item\"]",
+          "n": 6
+        }
+      ],
+      "within": "getByRole('button', { name: 'Add to cart' })",
+      "best": ".inventory_item"
+    },
+    "i": 7
+  },
+  {
+    "url": "https://www.saucedemo.com/inventory.html",
+    "ts": 1780563197118,
+    "type": "assert",
+    "assert": "visible",
+    "tag": "div",
+    "role": "div",
+    "name": "Sauce Labs Backpack",
+    "unique": {
+      "all": [
+        {
+          "kind": "testId",
+          "value": "[data-test=\"inventory-item-name\"]",
+          "n": 6
+        },
+        {
+          "kind": "css",
+          "value": "#item_4_title_link > div",
+          "n": 1
+        },
+        {
+          "kind": "xpath",
+          "value": "//*[@data-test='inventory-item-name']",
+          "n": 6
+        },
+        {
+          "kind": "text",
+          "value": "getByText('Sauce Labs Backpack', { exact: true })",
+          "n": 2
+        }
+      ],
+      "best": "#item_4_title_link > div"
+    },
+    "family": {
+      "count": 6,
+      "all": [
+        {
+          "kind": "css",
+          "value": ".inventory_item",
+          "n": 6
+        },
+        {
+          "kind": "testId",
+          "value": "[data-test=\"inventory-item\"]",
+          "n": 6
+        }
+      ],
+      "within": ".inventory_item_description > .inventory_item_label > a > .inventory_item_name",
+      "best": ".inventory_item"
+    },
+    "i": 8
+  },
+  {
+    "url": "https://www.saucedemo.com/inventory.html",
+    "ts": 1780563197468,
+    "type": "dblclick",
+    "tag": "button",
+    "role": "button",
+    "name": "Add to cart",
+    "unique": {
+      "all": [
+        {
+          "kind": "testId",
+          "value": "[data-test=\"add-to-cart-sauce-labs-onesie\"]",
+          "n": 1
+        },
+        {
+          "kind": "role",
+          "value": "getByRole('button', { name: 'Add to cart' })",
+          "n": 5
+        },
+        {
+          "kind": "css",
+          "value": "#add-to-cart-sauce-labs-onesie",
+          "n": 1
+        },
+        {
+          "kind": "xpath",
+          "value": "//*[@data-test='add-to-cart-sauce-labs-onesie']",
+          "n": 1
+        },
+        {
+          "kind": "text",
+          "value": "getByText('Add to cart', { exact: true })",
+          "n": 5
+        }
+      ],
+      "best": "[data-test=\"add-to-cart-sauce-labs-onesie\"]"
+    },
+    "family": {
+      "count": 6,
+      "all": [
+        {
+          "kind": "css",
+          "value": ".inventory_item",
+          "n": 6
+        },
+        {
+          "kind": "testId",
+          "value": "[data-test=\"inventory-item\"]",
+          "n": 6
+        }
+      ],
+      "within": "getByRole('button', { name: 'Add to cart' })",
+      "best": ".inventory_item"
+    },
+    "i": 9
+  }
+]

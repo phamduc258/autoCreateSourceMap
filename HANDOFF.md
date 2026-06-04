@@ -2,7 +2,7 @@
 
 > File tóm tắt để **tiếp tục công việc ở một session Claude khác**.
 > Session mới chỉ cần đọc file này là nắm đủ bối cảnh, không cần đọc lại hội thoại cũ.
-> Tạo: 2026-06-03 · **Cập nhật: 2026-06-04 (đã chạy thật, demo PASS trên saucedemo).**
+> Tạo: 2026-06-03 · **Cập nhật: 2026-06-04 — có 2 tool: (A) Crawler lấy DOM, (B) Recorder kiểu Playwright codegen. Đã chạy thật trên saucedemo.**
 
 ---
 
@@ -35,19 +35,18 @@ với selector chính xác. Vấn đề cốt lõi: Claude cần "nhìn thấy" 
 
 ```
 testCase/
-  crawler/
-    config.ts        # *** FILE USER SỬA *** — login + danh sách pages + actions (đang cấu hình cho saucedemo)
-    crawl.ts         # tool chính: login → quét → VERIFY selector → xuất index.md + screens/*.md
-    extract.ts       # chạy trong browser: quét element + sinh DANH SÁCH ứng viên selector
-  output/            # (gitignored) kết quả crawl — xem mục 6
-  testcases/
-    TC001-checkout.md   # test case mẫu (input do người viết)
-  tests/
-    checkout.spec.ts    # test sinh ra (PASS)
-    pages/              # Page Object Model: LoginPage, InventoryPage, CartPage, CheckoutPage
-  playwright.config.ts  # baseURL lấy từ .env, reporter list
-  .env                  # BASE_URL + TEST_USER + TEST_PASS (đang là saucedemo)
-  package.json · tsconfig.json · README.md · .gitignore
+  crawler/                  # TOOL A — crawl tự động lấy DOM (config-driven)
+    config.ts               # *** FILE USER SỬA *** — login + pages + actions (đang là saucedemo)
+    crawl.ts                # login → quét → VERIFY selector → xuất index.md + screens/*.md
+    extract.ts              # chạy trong browser: quét element + sinh ứng viên selector
+  recorder/                 # TOOL B — ghi thao tác kiểu codegen (user-driven). Xem mục 9.
+    record.ts               # Node: bindings, sinh code (toSpec), CỬA SỔ code riêng, dock, state
+    inject.js               # chạy trong trang: toolbar + sinh selector unique/family
+  output/                   # (gitignored) kết quả crawl — xem mục 6
+  recording/                # kết quả record: recording/<name>/{<name>.json,.md,.spec.ts} (output, xóa được)
+  testcases/TC001-checkout.md   # test case mẫu (input do người viết)
+  tests/                    # checkout.spec.ts + pages/ (POM: Login/Inventory/Cart/Checkout) — demo PASS
+  playwright.config.ts · .env · package.json · tsconfig.json · README.md · .gitignore
 ```
 
 ## 6. Cách tool hoạt động (sau nâng cấp)
@@ -82,7 +81,31 @@ Element trùng locator (vd dòng bảng) gộp `(lap xN)`.
 2. `npm run crawl` → kiểm tra `output/index.md` + `screens/*.md` (đặt `headless:false` trong config để xem trực quan).
 3. Sinh test: đưa test case thật + `screens/<màn liên quan>.md` cho Claude → sinh `tests/*.spec.ts` (POM) → `npx playwright test`.
 
-## 9. Lưu ý kỹ thuật + các fix đã áp dụng
+## 9. TOOL B — Recorder (kiểu Playwright codegen)
+
+User *diễn* test case trên site → recorder ghi lại → sinh selector + code. Bổ sung cho crawler (crawler quét tự động theo config; recorder bắt đúng luồng user thao tác).
+
+**Chạy:**
+```bash
+npm run record -- <url> --name=TC001                  # ghi; kết thúc: ĐÓNG cửa sổ app hoặc Ctrl+C
+RECORD_STORAGE=output/.auth/state.json npm run record -- <url> --name=TC002   # nạp phiên login đã lưu
+RECORD_SELECTORS=css,xpath npm run record -- <url> --name=TC003               # lọc loại selector trong 'unique'
+```
+
+**Output:** `recording/<name>/` gồm 3 file:
+- `<name>.spec.ts` — code Playwright **chạy được** (giống codegen; dùng `unique.best`).
+- `<name>.json` — **bản giàu cho Claude**: mỗi action có `unique` (trỏ đúng 1) + `family` (nhóm item lặp + `within`) → viết assertion kiểu "data có trong list" (`locator.filter({hasText}).<within>`).
+- `<name>.md` — đọc cho người.
+
+**Toolbar (hiện trong trang khi headed):** ☰ kéo · ● Rec (bật/tắt ghi) · 🎯 Pick locator · 👁 Assert visible · 🔤 Assert text · = Assert value · `</> Code` (panel inline). Pick/Assert là 1-lần: bật → click element → log → về chế độ ghi; Esc hủy.
+
+**Cửa sổ code riêng:** Node mở 1 context riêng = 1 cửa sổ trình duyệt độc lập (không bị ghi), **dock sát bên phải app**, hiện spec **live + syntax highlight**, cập nhật mỗi thao tác.
+
+**Menu chuột phải ("Choose action"):** chuột phải vào 1 element → chọn **Click · Right click · Double click · Hover · Pick locator** → log đúng action đó (chỉ GHI, không thực thi trên trang). Esc/click ngoài để đóng; tắt khi Rec off.
+
+**Type action trong `.json`:** `navigate · click · rightclick · dblclick · hover · fill · select · press · pick · assert(visible/text/value)`. → `toSpec()` map sang `.click()`/`.click({button:'right'})`/`.dblclick()`/`.hover()`/`.fill()`/`expect().toBeVisible()`…
+
+## 10. Lưu ý kỹ thuật + các fix đã áp dụng
 
 - ESM (`"type":"module"`) + chạy TS bằng `tsx`. Import file nội bộ dùng đuôi `.js` (tsx/Playwright tự map sang `.ts`).
 - **Fix đã làm (đừng phá):**
@@ -91,6 +114,12 @@ Element trùng locator (vd dòng bảng) gộp `(lap xN)`.
   - `extract.ts` có quét `[data-test*]`/`[data-cy]`/`[data-qa]` (để bắt cả link giỏ/badge không có href/role).
   - `<select>` không lấy text các option làm "tên".
 - a11y dùng `locator('body').ariaSnapshot()`. Máy: Node v22.16, Chromium qua Playwright.
+
+**Recorder (`recorder/`) — fix ĐỪNG PHÁ:**
+- State (Rec on/off, vị trí toolbar, panel code) giữ ở **Node** (`__recGetState`/`__recSetState`), trang mới khôi phục lại → KHÔNG reset khi chuyển trang.
+- Kết thúc bằng `page.on('close')` (đóng cửa sổ app) / `browser disconnected` / Ctrl+C — **KHÔNG** dùng `page.waitForEvent('close')` (có timeout mặc định 30s → tự dừng).
+- `inject.js` nạp qua `addInitScript({content})` (string) để né `__name`; vẫn shim `window.__name` trong **cả app context lẫn context cửa sổ code** (vì `page.evaluate`/highlight dùng hàm transpiled).
+- Cửa sổ code = **context riêng** (nên KHÔNG bị recorder ghi). Xếp 2 cửa sổ phủ **100%** màn hình: **maximize cửa sổ app qua CDP để ĐO full work-area** (chính xác, KHÔNG đoán scale/DPI — Playwright ép `deviceScaleFactor=1` nên `devicePixelRatio` luôn = 1, đoán sẽ sai), rồi chia: code giữ `availWidth × 0.42`, app lấy phần còn lại. Đổi `0.42` trong `record.ts` để chỉnh độ rộng code.
 
 ---
 

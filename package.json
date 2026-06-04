@@ -6,7 +6,8 @@
   "description": "Tool lay DOM/selector tu site test de AI sinh Playwright test",
   "scripts": {
     "crawl": "tsx crawler/crawl.ts",
-    "relogin": "tsx crawler/crawl.ts --relogin"
+    "relogin": "tsx crawler/crawl.ts --relogin",
+    "record": "tsx recorder/record.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.0",
