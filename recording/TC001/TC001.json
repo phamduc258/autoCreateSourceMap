@@ -3,11 +3,11 @@
     "i": 1,
     "type": "navigate",
     "url": "https://staging-hrbc-jp.porterscloud.com/index/login",
-    "ts": 1780606194977
+    "ts": 1780646321561
   },
   {
     "url": "https://staging-hrbc-jp.porterscloud.com/index/login",
-    "ts": 1780606207240,
+    "ts": 1780646335685,
     "type": "click",
     "tag": "input",
     "role": "textbox",
@@ -15,14 +15,20 @@
     "unique": {
       "all": [
         {
-          "kind": "placeholder",
-          "value": "getByPlaceholder('Company ID')",
+          "kind": "css#id",
+          "value": "#Model_LoginForm_company_login_id",
           "fragile": false,
           "n": 1
         },
         {
-          "kind": "css#id",
-          "value": "#Model_LoginForm_company_login_id",
+          "kind": "xpath@id",
+          "value": "//input[@id=\"Model_LoginForm_company_login_id\"]",
+          "fragile": false,
+          "n": 1
+        },
+        {
+          "kind": "placeholder",
+          "value": "getByPlaceholder('Company ID')",
           "fragile": false,
           "n": 1
         },
@@ -39,19 +45,13 @@
           "n": 1
         },
         {
-          "kind": "xpath@id",
-          "value": "//input[@id=\"Model_LoginForm_company_login_id\"]",
-          "fragile": false,
-          "n": 1
-        },
-        {
           "kind": "xpathPath",
           "value": "//*[@id=\"Model_LoginForm_company_login_id\"]",
           "fragile": true,
           "n": 1
         }
       ],
-      "best": "getByPlaceholder('Company ID')"
+      "best": "#Model_LoginForm_company_login_id"
     },
     "family": {
       "count": 7,
@@ -70,7 +70,7 @@
   },
   {
     "url": "https://staging-hrbc-jp.porterscloud.com/index/login",
-    "ts": 1780606210391,
+    "ts": 1780646339839,
     "type": "fill",
     "value": "porters_autotest_agent",
     "tag": "input",
@@ -79,14 +79,20 @@
     "unique": {
       "all": [
         {
-          "kind": "placeholder",
-          "value": "getByPlaceholder('Company ID')",
+          "kind": "css#id",
+          "value": "#Model_LoginForm_company_login_id",
           "fragile": false,
           "n": 1
         },
         {
-          "kind": "css#id",
-          "value": "#Model_LoginForm_company_login_id",
+          "kind": "xpath@id",
+          "value": "//input[@id=\"Model_LoginForm_company_login_id\"]",
+          "fragile": false,
+          "n": 1
+        },
+        {
+          "kind": "placeholder",
+          "value": "getByPlaceholder('Company ID')",
           "fragile": false,
           "n": 1
         },
@@ -103,19 +109,13 @@
           "n": 1
         },
         {
-          "kind": "xpath@id",
-          "value": "//input[@id=\"Model_LoginForm_company_login_id\"]",
-          "fragile": false,
-          "n": 1
-        },
-        {
           "kind": "xpathPath",
           "value": "//*[@id=\"Model_LoginForm_company_login_id\"]",
           "fragile": true,
           "n": 1
         }
       ],
-      "best": "getByPlaceholder('Company ID')"
+      "best": "#Model_LoginForm_company_login_id"
     },
     "family": {
       "count": 7,
@@ -134,7 +134,7 @@
   },
   {
     "url": "https://staging-hrbc-jp.porterscloud.com/index/login",
-    "ts": 1780606210486,
+    "ts": 1780646339924,
     "type": "click",
     "tag": "input",
     "role": "textbox",
@@ -142,14 +142,20 @@
     "unique": {
       "all": [
         {
-          "kind": "placeholder",
-          "value": "getByPlaceholder('Mail Address')",
+          "kind": "css#id",
+          "value": "#Model_LoginForm_username",
           "fragile": false,
           "n": 1
         },
         {
-          "kind": "css#id",
-          "value": "#Model_LoginForm_username",
+          "kind": "xpath@id",
+          "value": "//input[@id=\"Model_LoginForm_username\"]",
+          "fragile": false,
+          "n": 1
+        },
+        {
+          "kind": "placeholder",
+          "value": "getByPlaceholder('Mail Address')",
           "fragile": false,
           "n": 1
         },
@@ -166,19 +172,13 @@
           "n": 1
         },
         {
-          "kind": "xpath@id",
-          "value": "//input[@id=\"Model_LoginForm_username\"]",
-          "fragile": false,
-          "n": 1
-        },
-        {
           "kind": "xpathPath",
           "value": "//*[@id=\"Model_LoginForm_username\"]",
           "fragile": true,
           "n": 1
         }
       ],
-      "best": "getByPlaceholder('Mail Address')"
+      "best": "#Model_LoginForm_username"
     },
     "family": {
       "count": 7,
@@ -197,7 +197,7 @@
   },
   {
     "url": "https://staging-hrbc-jp.porterscloud.com/index/login",
-    "ts": 1780606213288,
+    "ts": 1780646342779,
     "type": "fill",
     "value": "tamnt@vnext.vn",
     "tag": "input",
@@ -206,14 +206,20 @@
     "unique": {
       "all": [
         {
-          "kind": "placeholder",
-          "value": "getByPlaceholder('Mail Address')",
+          "kind": "css#id",
+          "value": "#Model_LoginForm_username",
           "fragile": false,
           "n": 1
         },
         {
-          "kind": "css#id",
-          "value": "#Model_LoginForm_username",
+          "kind": "xpath@id",
+          "value": "//input[@id=\"Model_LoginForm_username\"]",
+          "fragile": false,
+          "n": 1
+        },
+        {
+          "kind": "placeholder",
+          "value": "getByPlaceholder('Mail Address')",
           "fragile": false,
           "n": 1
         },
@@ -230,19 +236,13 @@
           "n": 1
         },
         {
-          "kind": "xpath@id",
-          "value": "//input[@id=\"Model_LoginForm_username\"]",
-          "fragile": false,
-          "n": 1
-        },
-        {
           "kind": "xpathPath",
           "value": "//*[@id=\"Model_LoginForm_username\"]",
           "fragile": true,
           "n": 1
         }
       ],
-      "best": "getByPlaceholder('Mail Address')"
+      "best": "#Model_LoginForm_username"
     },
     "family": {
       "count": 7,
@@ -261,7 +261,7 @@
   },
   {
     "url": "https://staging-hrbc-jp.porterscloud.com/index/login",
-    "ts": 1780606213398,
+    "ts": 1780646342883,
     "type": "click",
     "tag": "input",
     "role": "textbox",
@@ -269,14 +269,20 @@
     "unique": {
       "all": [
         {
-          "kind": "placeholder",
-          "value": "getByPlaceholder('Password')",
+          "kind": "css#id",
+          "value": "#Model_LoginForm_password",
           "fragile": false,
           "n": 1
         },
         {
-          "kind": "css#id",
-          "value": "#Model_LoginForm_password",
+          "kind": "xpath@id",
+          "value": "//input[@id=\"Model_LoginForm_password\"]",
+          "fragile": false,
+          "n": 1
+        },
+        {
+          "kind": "placeholder",
+          "value": "getByPlaceholder('Password')",
           "fragile": false,
           "n": 1
         },
@@ -293,19 +299,13 @@
           "n": 1
         },
         {
-          "kind": "xpath@id",
-          "value": "//input[@id=\"Model_LoginForm_password\"]",
-          "fragile": false,
-          "n": 1
-        },
-        {
           "kind": "xpathPath",
           "value": "//*[@id=\"Model_LoginForm_password\"]",
           "fragile": true,
           "n": 1
         }
       ],
-      "best": "getByPlaceholder('Password')"
+      "best": "#Model_LoginForm_password"
     },
     "family": {
       "count": 7,
@@ -324,7 +324,7 @@
   },
   {
     "url": "https://staging-hrbc-jp.porterscloud.com/index/login",
-    "ts": 1780606216994,
+    "ts": 1780646343939,
     "type": "fill",
     "value": "vnext@2024",
     "tag": "input",
@@ -333,14 +333,20 @@
     "unique": {
       "all": [
         {
-          "kind": "placeholder",
-          "value": "getByPlaceholder('Password')",
+          "kind": "css#id",
+          "value": "#Model_LoginForm_password",
           "fragile": false,
           "n": 1
         },
         {
-          "kind": "css#id",
-          "value": "#Model_LoginForm_password",
+          "kind": "xpath@id",
+          "value": "//input[@id=\"Model_LoginForm_password\"]",
+          "fragile": false,
+          "n": 1
+        },
+        {
+          "kind": "placeholder",
+          "value": "getByPlaceholder('Password')",
           "fragile": false,
           "n": 1
         },
@@ -357,19 +363,13 @@
           "n": 1
         },
         {
-          "kind": "xpath@id",
-          "value": "//input[@id=\"Model_LoginForm_password\"]",
-          "fragile": false,
-          "n": 1
-        },
-        {
           "kind": "xpathPath",
           "value": "//*[@id=\"Model_LoginForm_password\"]",
           "fragile": true,
           "n": 1
         }
       ],
-      "best": "getByPlaceholder('Password')"
+      "best": "#Model_LoginForm_password"
     },
     "family": {
       "count": 7,
@@ -388,13 +388,25 @@
   },
   {
     "url": "https://staging-hrbc-jp.porterscloud.com/index/login",
-    "ts": 1780606217070,
+    "ts": 1780646344012,
     "type": "click",
     "tag": "button",
     "role": "button",
     "name": "Login",
     "unique": {
       "all": [
+        {
+          "kind": "css#id",
+          "value": "#yt0",
+          "fragile": false,
+          "n": 1
+        },
+        {
+          "kind": "xpath@id",
+          "value": "//button[@id=\"yt0\"]",
+          "fragile": false,
+          "n": 1
+        },
         {
           "kind": "role",
           "value": "getByRole('button', { name: 'Login' })",
@@ -408,14 +420,8 @@
           "n": 1
         },
         {
-          "kind": "text",
-          "value": "getByText('Login', { exact: true })",
-          "fragile": false,
-          "n": 2
-        },
-        {
-          "kind": "css#id",
-          "value": "#yt0",
+          "kind": "xpath.text",
+          "value": "//button[normalize-space()=\"Login\"]",
           "fragile": false,
           "n": 1
         },
@@ -426,25 +432,19 @@
           "n": 1
         },
         {
-          "kind": "xpath@id",
-          "value": "//button[@id=\"yt0\"]",
-          "fragile": false,
-          "n": 1
-        },
-        {
-          "kind": "xpath.text",
-          "value": "//button[normalize-space()=\"Login\"]",
-          "fragile": false,
-          "n": 1
-        },
-        {
           "kind": "xpathPath",
           "value": "//*[@id=\"yt0\"]",
           "fragile": true,
           "n": 1
+        },
+        {
+          "kind": "text",
+          "value": "getByText('Login', { exact: true })",
+          "fragile": false,
+          "n": 2
         }
       ],
-      "best": "getByRole('button', { name: 'Login' })"
+      "best": "#yt0"
     },
     "family": {
       "count": 7,
@@ -465,11 +465,11 @@
     "i": 9,
     "type": "navigate",
     "url": "https://staging-hrbc-jp.porterscloud.com/deny/index?error=duplicate",
-    "ts": 1780606217895
+    "ts": 1780646344949
   },
   {
     "url": "https://staging-hrbc-jp.porterscloud.com/deny/index?error=duplicate",
-    "ts": 1780606223143,
+    "ts": 1780646370220,
     "type": "click",
     "tag": "button",
     "role": "button",
@@ -483,10 +483,10 @@
           "n": 1
         },
         {
-          "kind": "text",
-          "value": "getByText('OK', { exact: true })",
+          "kind": "xpath.text",
+          "value": "//button[normalize-space()=\"OK\"]",
           "fragile": false,
-          "n": 4
+          "n": 1
         },
         {
           "kind": "css.class",
@@ -501,22 +501,22 @@
           "n": 1
         },
         {
-          "kind": "xpath@class",
-          "value": "//button[contains(concat(\" \",normalize-space(@class),\" \"),\" ui-button \")]",
-          "fragile": false,
-          "n": 3
-        },
-        {
-          "kind": "xpath.text",
-          "value": "//button[normalize-space()=\"OK\"]",
-          "fragile": false,
-          "n": 1
-        },
-        {
           "kind": "xpathPath",
           "value": "/html[1]/body[1]/div[11]/div[3]/div[1]/button[1]",
           "fragile": true,
           "n": 1
+        },
+        {
+          "kind": "text",
+          "value": "getByText('OK', { exact: true })",
+          "fragile": false,
+          "n": 4
+        },
+        {
+          "kind": "xpath@class",
+          "value": "//button[contains(concat(\" \",normalize-space(@class),\" \"),\" ui-button \")]",
+          "fragile": false,
+          "n": 3
         }
       ],
       "best": "getByRole('button', { name: 'OK' })"
@@ -540,11 +540,11 @@
     "i": 11,
     "type": "navigate",
     "url": "https://staging-hrbc-jp.porterscloud.com/common/navigation",
-    "ts": 1780606223764
+    "ts": 1780646370890
   },
   {
     "url": "https://staging-hrbc-jp.porterscloud.com/common/navigation",
-    "ts": 1780606225950,
+    "ts": 1780646377412,
     "type": "click",
     "tag": "button",
     "role": "button",
@@ -564,6 +564,24 @@
           "n": 1
         },
         {
+          "kind": "xpath.text",
+          "value": "//button[normalize-space()=\"02.私の部署の求人(今年)\"]",
+          "fragile": false,
+          "n": 1
+        },
+        {
+          "kind": "cssPath",
+          "value": "#main > div > main > section:nth-of-type(1) > main > ul:nth-of-type(1) > li:nth-of-type(2) > button",
+          "fragile": true,
+          "n": 1
+        },
+        {
+          "kind": "xpathPath",
+          "value": "/html[1]/body[1]/div[1]/div[1]/main[1]/section[1]/main[1]/ul[1]/li[2]/button[1]",
+          "fragile": true,
+          "n": 1
+        },
+        {
           "kind": "text",
           "value": "getByText('02.私の部署の求人(今年)', { exact: true })",
           "fragile": false,
@@ -576,28 +594,10 @@
           "n": 6
         },
         {
-          "kind": "cssPath",
-          "value": "#main > div > main > section:nth-of-type(1) > main > ul:nth-of-type(1) > li:nth-of-type(2) > button",
-          "fragile": true,
-          "n": 1
-        },
-        {
           "kind": "xpath@class",
           "value": "//button[contains(concat(\" \",normalize-space(@class),\" \"),\" content-button \")]",
           "fragile": false,
           "n": 10
-        },
-        {
-          "kind": "xpath.text",
-          "value": "//button[normalize-space()=\"02.私の部署の求人(今年)\"]",
-          "fragile": false,
-          "n": 1
-        },
-        {
-          "kind": "xpathPath",
-          "value": "/html[1]/body[1]/div[1]/div[1]/main[1]/section[1]/main[1]/ul[1]/li[2]/button[1]",
-          "fragile": true,
-          "n": 1
         }
       ],
       "best": "getByRole('button', { name: '02.私の部署の求人(今年)' })"
@@ -621,11 +621,11 @@
     "i": 13,
     "type": "navigate",
     "url": "https://staging-hrbc-jp.porterscloud.com/job/search?condition_id=13&menu_id=3",
-    "ts": 1780606232120
+    "ts": 1780646397081
   },
   {
     "url": "https://staging-hrbc-jp.porterscloud.com/job/search?condition_id=13&menu_id=3",
-    "ts": 1780606235159,
+    "ts": 1780646402331,
     "type": "click",
     "tag": "a",
     "role": "link",
@@ -633,20 +633,20 @@
     "unique": {
       "all": [
         {
-          "kind": "role",
-          "value": "getByRole('link', { name: '＋新規追加' })",
+          "kind": "css#id",
+          "value": "#add",
           "fragile": false,
           "n": 1
         },
         {
-          "kind": "text",
-          "value": "getByText('＋新規追加', { exact: true })",
+          "kind": "xpath@id",
+          "value": "//a[@id=\"add\"]",
           "fragile": false,
-          "n": 2
+          "n": 1
         },
         {
-          "kind": "css#id",
-          "value": "#add",
+          "kind": "role",
+          "value": "getByRole('link', { name: '＋新規追加' })",
           "fragile": false,
           "n": 1
         },
@@ -657,20 +657,14 @@
           "n": 1
         },
         {
-          "kind": "css.class",
-          "value": "a.dialog_link",
+          "kind": "xpath.text",
+          "value": "//a[normalize-space()=\"＋新規追加\"]",
           "fragile": false,
           "n": 1
         },
         {
-          "kind": "cssPath",
-          "value": "#add",
-          "fragile": true,
-          "n": 1
-        },
-        {
-          "kind": "xpath@id",
-          "value": "//a[@id=\"add\"]",
+          "kind": "css.class",
+          "value": "a.dialog_link",
           "fragile": false,
           "n": 1
         },
@@ -681,9 +675,9 @@
           "n": 1
         },
         {
-          "kind": "xpath.text",
-          "value": "//a[normalize-space()=\"＋新規追加\"]",
-          "fragile": false,
+          "kind": "cssPath",
+          "value": "#add",
+          "fragile": true,
           "n": 1
         },
         {
@@ -691,9 +685,15 @@
           "value": "//*[@id=\"add\"]",
           "fragile": true,
           "n": 1
+        },
+        {
+          "kind": "text",
+          "value": "getByText('＋新規追加', { exact: true })",
+          "fragile": false,
+          "n": 2
         }
       ],
-      "best": "getByRole('link', { name: '＋新規追加' })"
+      "best": "#add"
     },
     "family": {
       "count": 420,
@@ -712,7 +712,7 @@
   },
   {
     "url": "https://staging-hrbc-jp.porterscloud.com/job/search?condition_id=13&menu_id=3",
-    "ts": 1780606241092,
+    "ts": 1780646408476,
     "type": "click",
     "tag": "input",
     "role": "textbox",
@@ -726,28 +726,28 @@
           "n": 1
         },
         {
-          "kind": "css.class",
-          "value": "input.reference-input",
-          "fragile": false,
-          "n": 3
-        },
-        {
           "kind": "cssPath",
           "value": "#pageJob > div:nth-of-type(16) > div:nth-of-type(3) > div:nth-of-type(10) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div > input",
           "fragile": true,
           "n": 1
         },
         {
-          "kind": "xpath@class",
-          "value": "//input[contains(concat(\" \",normalize-space(@class),\" \"),\" reference-input \")]",
-          "fragile": false,
-          "n": 3
-        },
-        {
           "kind": "xpathPath",
           "value": "/html[1]/body[1]/div[16]/div[3]/div[10]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[1]/div[1]/input[1]",
           "fragile": true,
           "n": 1
+        },
+        {
+          "kind": "css.class",
+          "value": "input.reference-input",
+          "fragile": false,
+          "n": 3
+        },
+        {
+          "kind": "xpath@class",
+          "value": "//input[contains(concat(\" \",normalize-space(@class),\" \"),\" reference-input \")]",
+          "fragile": false,
+          "n": 3
         }
       ],
       "best": "(//*[@aria-modal='true']//*[normalize-space()=\"企業\"])[1]/ancestor-or-self::*[.//input][1]/descendant::input[1]"
@@ -769,7 +769,290 @@
   },
   {
     "url": "https://staging-hrbc-jp.porterscloud.com/job/search?condition_id=13&menu_id=3",
-    "ts": 1780606242523,
+    "ts": 1780646411548,
+    "type": "press",
+    "key": "Tab",
+    "tag": "input",
+    "role": "textbox",
+    "name": "",
+    "unique": {
+      "all": [
+        {
+          "kind": "label→input",
+          "value": "(//*[@aria-modal='true']//*[normalize-space()=\"企業\"])[1]/ancestor-or-self::*[.//input][1]/descendant::input[1]",
+          "fragile": false,
+          "n": 1
+        },
+        {
+          "kind": "cssPath",
+          "value": "#pageJob > div:nth-of-type(16) > div:nth-of-type(3) > div:nth-of-type(10) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div > input",
+          "fragile": true,
+          "n": 1
+        },
+        {
+          "kind": "xpathPath",
+          "value": "/html[1]/body[1]/div[16]/div[3]/div[10]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[1]/div[1]/input[1]",
+          "fragile": true,
+          "n": 1
+        },
+        {
+          "kind": "css.class",
+          "value": "input.reference-input",
+          "fragile": false,
+          "n": 3
+        },
+        {
+          "kind": "xpath@class",
+          "value": "//input[contains(concat(\" \",normalize-space(@class),\" \"),\" reference-input \")]",
+          "fragile": false,
+          "n": 3
+        }
+      ],
+      "best": "(//*[@aria-modal='true']//*[normalize-space()=\"企業\"])[1]/ancestor-or-self::*[.//input][1]/descendant::input[1]"
+    },
+    "family": {
+      "count": 1343,
+      "all": [
+        {
+          "kind": "tag",
+          "value": "div",
+          "n": 1343
+        }
+      ],
+      "within": "div > div > .reference-input",
+      "best": "div"
+    },
+    "fragile": false,
+    "i": 16
+  },
+  {
+    "url": "https://staging-hrbc-jp.porterscloud.com/job/search?condition_id=13&menu_id=3",
+    "ts": 1780646411555,
+    "type": "fill",
+    "value": "abc",
+    "tag": "input",
+    "role": "textbox",
+    "name": "",
+    "unique": {
+      "all": [
+        {
+          "kind": "label→input",
+          "value": "(//*[@aria-modal='true']//*[normalize-space()=\"企業\"])[1]/ancestor-or-self::*[.//input][1]/descendant::input[1]",
+          "fragile": false,
+          "n": 1
+        },
+        {
+          "kind": "cssPath",
+          "value": "#pageJob > div:nth-of-type(16) > div:nth-of-type(3) > div:nth-of-type(10) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div > input",
+          "fragile": true,
+          "n": 1
+        },
+        {
+          "kind": "xpathPath",
+          "value": "/html[1]/body[1]/div[16]/div[3]/div[10]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[1]/div[1]/input[1]",
+          "fragile": true,
+          "n": 1
+        },
+        {
+          "kind": "css.class",
+          "value": "input.reference-input",
+          "fragile": false,
+          "n": 3
+        },
+        {
+          "kind": "xpath@class",
+          "value": "//input[contains(concat(\" \",normalize-space(@class),\" \"),\" reference-input \")]",
+          "fragile": false,
+          "n": 3
+        }
+      ],
+      "best": "(//*[@aria-modal='true']//*[normalize-space()=\"企業\"])[1]/ancestor-or-self::*[.//input][1]/descendant::input[1]"
+    },
+    "family": {
+      "count": 1343,
+      "all": [
+        {
+          "kind": "tag",
+          "value": "div",
+          "n": 1343
+        }
+      ],
+      "within": "div > div > .reference-input",
+      "best": "div"
+    },
+    "fragile": false,
+    "i": 17
+  },
+  {
+    "url": "https://staging-hrbc-jp.porterscloud.com/job/search?condition_id=13&menu_id=3",
+    "ts": 1780646413674,
+    "type": "press",
+    "key": "Tab",
+    "tag": "button",
+    "role": "button",
+    "name": "",
+    "unique": {
+      "all": [
+        {
+          "kind": "cssPath",
+          "value": "#pageJob > div:nth-of-type(16) > div:nth-of-type(3) > div:nth-of-type(10) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > button:nth-of-type(1)",
+          "fragile": true,
+          "n": 1
+        },
+        {
+          "kind": "xpathPath",
+          "value": "/html[1]/body[1]/div[16]/div[3]/div[10]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[1]/button[1]",
+          "fragile": true,
+          "n": 1
+        },
+        {
+          "kind": "css.class",
+          "value": "button.reference-input-search-button",
+          "fragile": false,
+          "n": 3
+        },
+        {
+          "kind": "xpath@class",
+          "value": "//button[contains(concat(\" \",normalize-space(@class),\" \"),\" reference-input-search-button \")]",
+          "fragile": false,
+          "n": 3
+        }
+      ],
+      "best": "#pageJob > div:nth-of-type(16) > div:nth-of-type(3) > div:nth-of-type(10) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > button:nth-of-type(1)"
+    },
+    "family": {
+      "count": 1348,
+      "all": [
+        {
+          "kind": "tag",
+          "value": "div",
+          "n": 1348
+        }
+      ],
+      "within": "div > .reference-input-search-button",
+      "best": "div"
+    },
+    "fragile": true,
+    "i": 18
+  },
+  {
+    "url": "https://staging-hrbc-jp.porterscloud.com/job/search?condition_id=13&menu_id=3",
+    "ts": 1780646415353,
+    "type": "press",
+    "key": "Tab",
+    "tag": "button",
+    "role": "button",
+    "name": "",
+    "unique": {
+      "all": [
+        {
+          "kind": "cssPath",
+          "value": "#pageJob > div:nth-of-type(16) > div:nth-of-type(3) > div:nth-of-type(10) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > button:nth-of-type(2)",
+          "fragile": true,
+          "n": 1
+        },
+        {
+          "kind": "xpathPath",
+          "value": "/html[1]/body[1]/div[16]/div[3]/div[10]/div[1]/div[2]/div[2]/div[2]/div[1]/div[1]/div[1]/button[2]",
+          "fragile": true,
+          "n": 1
+        },
+        {
+          "kind": "css.class",
+          "value": "button.reference-input-plus-button",
+          "fragile": false,
+          "n": 2
+        },
+        {
+          "kind": "xpath@class",
+          "value": "//button[contains(concat(\" \",normalize-space(@class),\" \"),\" reference-input-plus-button \")]",
+          "fragile": false,
+          "n": 2
+        }
+      ],
+      "best": "#pageJob > div:nth-of-type(16) > div:nth-of-type(3) > div:nth-of-type(10) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > button:nth-of-type(2)"
+    },
+    "family": {
+      "count": 1348,
+      "all": [
+        {
+          "kind": "tag",
+          "value": "div",
+          "n": 1348
+        }
+      ],
+      "within": "div > .reference-input-plus-button",
+      "best": "div"
+    },
+    "fragile": true,
+    "i": 19
+  },
+  {
+    "url": "https://staging-hrbc-jp.porterscloud.com/job/search?condition_id=13&menu_id=3",
+    "ts": 1780646416947,
+    "type": "click",
+    "tag": "div",
+    "role": "dialog",
+    "name": "求人 - 新規",
+    "unique": {
+      "all": [
+        {
+          "kind": "xpath.text",
+          "value": "//div[normalize-space()=\"求人 - 新規\"]",
+          "fragile": false,
+          "n": 1
+        },
+        {
+          "kind": "css.class",
+          "value": "div.record-screen-dialog",
+          "fragile": false,
+          "n": 1
+        },
+        {
+          "kind": "xpath@class",
+          "value": "//div[contains(concat(\" \",normalize-space(@class),\" \"),\" record-screen-dialog \")]",
+          "fragile": false,
+          "n": 1
+        },
+        {
+          "kind": "cssPath",
+          "value": "#pageJob > div:nth-of-type(16) > div:nth-of-type(3)",
+          "fragile": true,
+          "n": 1
+        },
+        {
+          "kind": "xpathPath",
+          "value": "/html[1]/body[1]/div[16]/div[3]",
+          "fragile": true,
+          "n": 1
+        },
+        {
+          "kind": "text",
+          "value": "getByText('求人 - 新規', { exact: true })",
+          "fragile": false,
+          "n": 2
+        }
+      ],
+      "best": "//div[normalize-space()=\"求人 - 新規\"]"
+    },
+    "family": {
+      "count": 1348,
+      "all": [
+        {
+          "kind": "tag",
+          "value": "div",
+          "n": 1348
+        }
+      ],
+      "within": ".record-screen-dialog",
+      "best": "div"
+    },
+    "fragile": false,
+    "i": 20
+  },
+  {
+    "url": "https://staging-hrbc-jp.porterscloud.com/job/search?condition_id=13&menu_id=3",
+    "ts": 1780646430646,
     "type": "click",
     "tag": "input",
     "role": "textbox",
@@ -783,28 +1066,28 @@
           "n": 1
         },
         {
-          "kind": "css.class",
-          "value": "input.reference-input",
-          "fragile": false,
-          "n": 3
-        },
-        {
           "kind": "cssPath",
           "value": "#pageJob > div:nth-of-type(16) > div:nth-of-type(3) > div:nth-of-type(10) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div > input",
           "fragile": true,
           "n": 1
         },
         {
-          "kind": "xpath@class",
-          "value": "//input[contains(concat(\" \",normalize-space(@class),\" \"),\" reference-input \")]",
-          "fragile": false,
-          "n": 3
-        },
-        {
           "kind": "xpathPath",
           "value": "/html[1]/body[1]/div[16]/div[3]/div[10]/div[1]/div[2]/div[3]/div[2]/div[1]/div[1]/div[1]/div[1]/input[1]",
           "fragile": true,
           "n": 1
+        },
+        {
+          "kind": "css.class",
+          "value": "input.reference-input",
+          "fragile": false,
+          "n": 3
+        },
+        {
+          "kind": "xpath@class",
+          "value": "//input[contains(concat(\" \",normalize-space(@class),\" \"),\" reference-input \")]",
+          "fragile": false,
+          "n": 3
         }
       ],
       "best": "(//*[@aria-modal='true']//*[normalize-space()=\"営業先\"])[1]/ancestor-or-self::*[.//input][1]/descendant::input[1]"
@@ -822,11 +1105,132 @@
       "best": "div"
     },
     "fragile": false,
-    "i": 16
+    "i": 21
   },
   {
     "url": "https://staging-hrbc-jp.porterscloud.com/job/search?condition_id=13&menu_id=3",
-    "ts": 1780606243150,
+    "ts": 1780646444475,
+    "type": "fill",
+    "value": "bde",
+    "tag": "input",
+    "role": "textbox",
+    "name": "",
+    "unique": {
+      "all": [
+        {
+          "kind": "label→input",
+          "value": "(//*[@aria-modal='true']//*[normalize-space()=\"営業先\"])[1]/ancestor-or-self::*[.//input][1]/descendant::input[1]",
+          "fragile": false,
+          "n": 1
+        },
+        {
+          "kind": "cssPath",
+          "value": "#pageJob > div:nth-of-type(16) > div:nth-of-type(3) > div:nth-of-type(10) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div > input",
+          "fragile": true,
+          "n": 1
+        },
+        {
+          "kind": "xpathPath",
+          "value": "/html[1]/body[1]/div[16]/div[3]/div[10]/div[1]/div[2]/div[3]/div[2]/div[1]/div[1]/div[1]/div[1]/input[1]",
+          "fragile": true,
+          "n": 1
+        },
+        {
+          "kind": "css.class",
+          "value": "input.reference-input",
+          "fragile": false,
+          "n": 3
+        },
+        {
+          "kind": "xpath@class",
+          "value": "//input[contains(concat(\" \",normalize-space(@class),\" \"),\" reference-input \")]",
+          "fragile": false,
+          "n": 3
+        }
+      ],
+      "best": "(//*[@aria-modal='true']//*[normalize-space()=\"営業先\"])[1]/ancestor-or-self::*[.//input][1]/descendant::input[1]"
+    },
+    "family": {
+      "count": 1348,
+      "all": [
+        {
+          "kind": "tag",
+          "value": "div",
+          "n": 1348
+        }
+      ],
+      "within": "div > div > .reference-input",
+      "best": "div"
+    },
+    "fragile": false,
+    "i": 22
+  },
+  {
+    "url": "https://staging-hrbc-jp.porterscloud.com/job/search?condition_id=13&menu_id=3",
+    "ts": 1780646444576,
+    "type": "click",
+    "tag": "div",
+    "role": "dialog",
+    "name": "求人 - 新規",
+    "unique": {
+      "all": [
+        {
+          "kind": "xpath.text",
+          "value": "//div[normalize-space()=\"求人 - 新規\"]",
+          "fragile": false,
+          "n": 1
+        },
+        {
+          "kind": "css.class",
+          "value": "div.record-screen-dialog",
+          "fragile": false,
+          "n": 1
+        },
+        {
+          "kind": "xpath@class",
+          "value": "//div[contains(concat(\" \",normalize-space(@class),\" \"),\" record-screen-dialog \")]",
+          "fragile": false,
+          "n": 1
+        },
+        {
+          "kind": "cssPath",
+          "value": "#pageJob > div:nth-of-type(16) > div:nth-of-type(3)",
+          "fragile": true,
+          "n": 1
+        },
+        {
+          "kind": "xpathPath",
+          "value": "/html[1]/body[1]/div[16]/div[3]",
+          "fragile": true,
+          "n": 1
+        },
+        {
+          "kind": "text",
+          "value": "getByText('求人 - 新規', { exact: true })",
+          "fragile": false,
+          "n": 2
+        }
+      ],
+      "best": "//div[normalize-space()=\"求人 - 新規\"]"
+    },
+    "family": {
+      "count": 1348,
+      "all": [
+        {
+          "kind": "tag",
+          "value": "div",
+          "n": 1348
+        }
+      ],
+      "within": ".record-screen-dialog",
+      "best": "div"
+    },
+    "fragile": false,
+    "i": 23
+  },
+  {
+    "url": "https://staging-hrbc-jp.porterscloud.com/job/search?condition_id=13&menu_id=3",
+    "ts": 1780646448005,
     "type": "click",
     "tag": "input",
     "role": "textbox",
@@ -840,28 +1244,28 @@
           "n": 1
         },
         {
-          "kind": "css.class",
-          "value": "input.link-input",
-          "fragile": false,
-          "n": 2
-        },
-        {
           "kind": "cssPath",
           "value": "#pageJob > div:nth-of-type(16) > div:nth-of-type(3) > div:nth-of-type(10) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(4) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div > input",
           "fragile": true,
           "n": 1
         },
         {
-          "kind": "xpath@class",
-          "value": "//input[contains(concat(\" \",normalize-space(@class),\" \"),\" link-input \")]",
-          "fragile": false,
-          "n": 2
-        },
-        {
           "kind": "xpathPath",
           "value": "/html[1]/body[1]/div[16]/div[3]/div[10]/div[1]/div[2]/div[4]/div[2]/div[1]/div[1]/div[1]/div[1]/input[1]",
           "fragile": true,
           "n": 1
+        },
+        {
+          "kind": "css.class",
+          "value": "input.link-input",
+          "fragile": false,
+          "n": 2
+        },
+        {
+          "kind": "xpath@class",
+          "value": "//input[contains(concat(\" \",normalize-space(@class),\" \"),\" link-input \")]",
+          "fragile": false,
+          "n": 2
         }
       ],
       "best": "(//*[normalize-space()=\"氏名(ご担当者)\"])[1]/ancestor-or-self::*[.//input][1]/descendant::input[1]"
@@ -879,6 +1283,78 @@
       "best": "div"
     },
     "fragile": false,
-    "i": 17
+    "i": 24
+  },
+  {
+    "url": "https://staging-hrbc-jp.porterscloud.com/job/search?condition_id=13&menu_id=3",
+    "ts": 1780646465884,
+    "type": "fill",
+    "value": "efg",
+    "tag": "input",
+    "role": "textbox",
+    "name": "",
+    "unique": {
+      "all": [
+        {
+          "kind": "label→input",
+          "value": "(//*[normalize-space()=\"氏名(ご担当者)\"])[1]/ancestor-or-self::*[.//input][1]/descendant::input[1]",
+          "fragile": false,
+          "n": 1
+        },
+        {
+          "kind": "cssPath",
+          "value": "#pageJob > div:nth-of-type(16) > div:nth-of-type(3) > div:nth-of-type(10) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(4) > div:nth-of-type(2) > div > div:nth-of-type(1) > div > div > input",
+          "fragile": true,
+          "n": 1
+        },
+        {
+          "kind": "xpathPath",
+          "value": "/html[1]/body[1]/div[16]/div[3]/div[10]/div[1]/div[2]/div[4]/div[2]/div[1]/div[1]/div[1]/div[1]/input[1]",
+          "fragile": true,
+          "n": 1
+        },
+        {
+          "kind": "css.class",
+          "value": "input.link-input",
+          "fragile": false,
+          "n": 2
+        },
+        {
+          "kind": "xpath@class",
+          "value": "//input[contains(concat(\" \",normalize-space(@class),\" \"),\" link-input \")]",
+          "fragile": false,
+          "n": 2
+        }
+      ],
+      "best": "(//*[normalize-space()=\"氏名(ご担当者)\"])[1]/ancestor-or-self::*[.//input][1]/descendant::input[1]"
+    },
+    "family": {
+      "count": 1348,
+      "all": [
+        {
+          "kind": "tag",
+          "value": "div",
+          "n": 1348
+        }
+      ],
+      "within": "div > div > .link-input",
+      "best": "div"
+    },
+    "fragile": false,
+    "i": 25
+  },
+  {
+    "i": 26,
+    "type": "screenshot",
+    "file": "shots/shot-1.png",
+    "url": "https://staging-hrbc-jp.porterscloud.com/job/search?condition_id=13&menu_id=3",
+    "ts": 0
+  },
+  {
+    "i": 27,
+    "type": "screenshot",
+    "file": "shots/shot-2.png",
+    "url": "https://staging-hrbc-jp.porterscloud.com/job/search?condition_id=13&menu_id=3",
+    "ts": 0
   }
 ]

@@ -218,7 +218,7 @@ async function main(): Promise<void> {
   await ctx.exposeBinding('__record', (source: any, a: any) => {
     if (recState.paused) return;             // Rec off -> khong ghi (ke ca ngay sau redirect)
     if (a.unique?.all) {
-      const win = a.unique.all.find((s: Cand) => s.n === 1) || a.unique.all[0]; // chon TRUOC khi loc hien thi
+      const win = a.unique.all.find((s: Cand) => s.n === 1) || a.unique.all[0]; // all DA xep hang san (inject.js) -> day = ⭐ de xuat; chon TRUOC khi loc hien thi
       a.unique.best = win?.value;
       a.fragile = !!win?.fragile;                                               // best la selector positional?
       a.unique.all = a.unique.all.filter((s: Cand) => KEEP.includes(s.kind));   // RECORD_SELECTORS chi loc HIEN THI

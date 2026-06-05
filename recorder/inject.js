@@ -149,6 +149,14 @@
     return null;
   }
 
+  // === Xep hang selector — DUNG CHUNG cho auto-pick (click/fill/...) VA bang Pick ===
+  // TRUST = do tin cay theo LOAI selector (so nho = tot hon). penalty = theo so khop + fragile.
+  // Thu tu: n=1&ben < n=1&mong manh < n>1 < n<=0; cung nhom -> theo TRUST. Phan tu [0] = "de xuat".
+  const TRUST = { testId: 0, 'css#id': 1, 'xpath@id': 1, role: 2, 'label→input': 3, placeholder: 4, label: 4, alt: 4, title: 4, 'css[name]': 5, 'css[href]': 6, text: 7, 'xpath.text': 7, 'css.class': 8, 'xpath@class': 8, cssPath: 9, xpathPath: 9 };
+  const trustOf = (c) => (TRUST[c.kind] != null ? TRUST[c.kind] : 5);
+  const penaltyOf = (c) => (c.n === 1 ? (c.fragile ? 1 : 0) : (c.n > 1 ? 2 : 3));
+  const rankCands = (list) => list.slice().sort((a, b) => (penaltyOf(a) * 100 + trustOf(a)) - (penaltyOf(b) * 100 + trustOf(b)));
+
   // === (1) UNIQUE: cac ung vien tro dung 1 element + so khop (n) ===
   function uniqueCandidates(el) {
     const ti = testId(el), name = accName(el), role = roleOf(el);
@@ -196,7 +204,7 @@
       else s.n = -1;
       delete s.css; delete s.roleName; delete s.textName;
     }
-    return out;
+    return rankCands(out); // sort theo TRUST+so khop -> [0] = "de xuat" (auto-pick & bang Pick dung chung 1 thu hang)
   }
 
   // === (2) FAMILY: nhom item lap "anh chi em cung ho" ===
@@ -293,13 +301,10 @@
     pickerTarget = el;
     var ttlEl = document.getElementById('__rec_picker_title');
     if (ttlEl) { var lbl = (pickerAction === 'assert' && pendingExtra) ? ('Assert ' + pendingExtra.assert) : ({ click: 'Click', rightclick: 'Right click', dblclick: 'Double click', hover: 'Hover', pick: 'Pick (lay locator)' }[pickerAction] || pickerAction); ttlEl.textContent = 'Chon selector de ' + lbl; }
-    // === SELECTOR ELEMENT: sort theo DO UY TIN (kind) + SO KHOP (n=1 tot nhat) + tranh fragile ===
-    var TRUST = { testId: 0, 'css#id': 1, 'xpath@id': 1, role: 2, 'label→input': 3, placeholder: 4, label: 4, alt: 4, title: 4, 'css[name]': 5, 'css[href]': 6, text: 7, 'xpath.text': 7, 'css.class': 8, 'xpath@class': 8, cssPath: 9, xpathPath: 9 };
-    var trustOf = function (c) { return TRUST[c.kind] != null ? TRUST[c.kind] : 5; };
-    var penaltyOf = function (c) { return c.n === 1 ? (c.fragile ? 1 : 0) : (c.n > 1 ? 2 : 3); }; // n=1&robust < n=1&fragile < n>1 < n<=0
+    // === SELECTOR ELEMENT: uniqueCandidates() DA sort san theo TRUST+so khop (dong bo voi auto-pick khi click) ===
     var esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); };
     var markOf = function (c) { return c.n === 1 ? (c.fragile ? '🔴 1 khop (mong manh)' : '✓ 1 khop') : (c.n > 1 ? '⚠ ' + c.n + ' khop' : (c.n === 0 ? '✗ 0 khop' : '? khong dem duoc')); };
-    var cands = uniqueCandidates(el).slice().sort(function (a, b) { return (penaltyOf(a) * 100 + trustOf(a)) - (penaltyOf(b) * 100 + trustOf(b)); });
+    var cands = uniqueCandidates(el);                 // [0] = de xuat (cung thu hang voi luc click)
     var bestI = (cands.length && penaltyOf(cands[0]) === 0) ? 0 : -1;
     var html = '<div style="padding:5px 10px;color:#cbd5e1;font:11px sans-serif;background:#0b1220;border-bottom:1px solid #374151">SELECTOR CHO ELEMENT — sort theo do uy tin &amp; so khop</div>';
     html += cands.map(function (c, i) {
