@@ -76,12 +76,16 @@ RECORD_TIMEOUT=120000 npm run record -- <url> --name=TC003                    # 
 
 **Output `recording/<name>/`:** `.spec.ts` (chạy được) · `.json` (bản giàu cho Claude: mỗi action có `unique.best`/`unique.all` + `family`) · `.md` · `shots/`.
 
-**Toolbar:** ☰ kéo · ● Rec · 📋 List SL (ON = mở bảng chọn selector) · 🎯 Pick · 👁 Visible · 🔤 Text · = Value · 📷 Shot · `</> Code`.
+**Toolbar (chỉ ICON, hover ra tooltip giải thích):**
+- **Chính (luôn hiện):** ☰ kéo · **●** Rec · **📋** List SL (ON = mở bảng chọn selector · OFF = tự lấy best) · **🎯** Pick · **⋯** More.
+- **Nhóm ⋯ (tool phụ):** **👁** Visible · **🔤** Text · **=** Value · **🎨** CSS · **📷** Shot. Mở ⋯ **cố định mép trái → nở sang phải** (không nhảy); trạng thái mở giữ qua chuyển trang.
+- Đã **bỏ nút `</> Code`** (đã có cửa sổ live code riêng).
 - **Bền:** có trên **tab/popup mới** (re-inject khi `domcontentloaded`, guard chống nhân đôi) + **tự gắn lại** khi SPA re-render `<body>` (MutationObserver). State giữ qua chuyển trang.
 
-**Bảng "Pick locator" (đã NÂNG CẤP) — 2 mục tách biệt:**
+**Bảng "Pick locator" — KÉO được (kéo header để di chuyển) — 2 mục tách biệt:**
 - **SELECTOR CHO ELEMENT** — **sort theo độ uy tín + số khớp**: (1) khớp đúng 1 & không mong manh → (2) đúng 1 nhưng positional 🔴 → (3) `⚠N` → (4) không khớp; trong nhóm theo độ tin cậy loại (`testId`>`#id`>`role`>`label→input`>…>`class`>positional). Dòng đầu = **⭐ đề xuất**. Hiện số khớp mỗi dòng. Click để dùng + copy.
 - **FAMILY — nhóm item lặp** (chỉ khi element trong list/bảng): selector cụm item + `within` → assertion "data trong list". Click để copy.
+- **Auto-pick khi CLICK (và List SL OFF) dùng CÙNG xếp hạng** → selector ghi tự động == **⭐ đề xuất** (1 nguồn: `uniqueCandidates()` đã sort sẵn). Bảng CSS (🎨) cũng kéo được tương tự.
 
 **`label→input` (CỐT LÕI cho form custom id/class đổi):** neo theo TEXT label → leo lên cụm cha chứa control → xuống control:
 `(//*[normalize-space()="<label>"])[1]/ancestor-or-self::*[.//<tag>][1]/descendant::<tag>[1]`. **Tự kiểm chứng** (đánh giá xpath, so `=== el` đúng element vừa chọn); nếu trùng tên ở nơi khác (vd dropdown header ngoài modal) → **tự bọc scope** `aria-modal`/`role`/`aria-label`/`#id` rồi verify lại. Chỉ sinh cho **text/textarea/select** (radio/checkbox dùng `getByRole`).
@@ -89,7 +93,9 @@ RECORD_TIMEOUT=120000 npm run record -- <url> --name=TC003                    # 
 **Cửa sổ code riêng** (context riêng, dock phải, **`viewport:null`** nên nút không bị cắt):
 - **✏️ Edit** → sửa tay **có syntax highlight** (overlay) · **💾 Save** → ghi file + **về khung hiển thị**, và **thao tác mới ghi sau vẫn NỐI TIẾP** vào bản sửa (chèn trước `});`) · **↺ Live** → bỏ bản sửa, về tự sinh · **Copy**.
 
-**Type action `.json`:** navigate · click · rightclick · dblclick · hover · fill · select · press · pick · assert(visible/text/value) · screenshot.
+**🎨 CSS (assert CSS):** bấm 🎨 → click element → bảng **thuộc tính CSS computed** (text-transform/color/font-size…) → chọn 1 → sinh `expect(...).toHaveCSS('prop','value')` (test kiểu hiển thị, vd chữ in HOA do `text-transform`). **Text assert lấy `textContent`** (không `innerText`) → khớp `toContainText`/`getByText` (không lệch khi CSS in HOA).
+
+**Type action `.json`:** navigate · click · rightclick · dblclick · hover · fill · select · press · pick · assert(visible/text/value/**css** kèm `cssProp`) · screenshot.
 
 **Độ bền selector:** positional (`cssPath`/`xpathPath`) gắn 🔴 *fragile*, cảnh báo trong `.md`/header `.spec.ts`. `looksGenerated` loại class tự sinh **kể cả `jssNNN`/`css-1a2`** (không chặn Mui-*/BEM).
 
@@ -102,7 +108,8 @@ RECORD_TIMEOUT=120000 npm run record -- <url> --name=TC003                    # 
   - SxS chỉ ảnh hưởng bản đóng gói chạy headed; headless-shell vẫn chạy. Chi tiết README mục 8.3.
 - **`goto` dùng `domcontentloaded`** (không `load`/`networkidle` — SPA hay treo) + timeout `RECORD_TIMEOUT`/60s + `.catch` (không chết phiên). Đã đổi ở record.ts + crawl.ts.
 - **`label→input` (inject.js):** `fieldLabel()` (đi lên ≤12 cấp, lấy text label ở anh-em-trước) → `labelAnchored()` dựng xpath + **verify `xfirst()===el`** + `scopeXPaths()` (bọc vùng khi trùng tên). Nhận diện xpath ở count (inject.js) và `asLocator` (record.ts) dùng `/^\(*\//`. `KEEP` mặc định có `label→input`.
-- **Picker:** `showPicker()` sort + 2 mục (element/family).
+- **Picker/CSS-pick + xếp hạng:** `uniqueCandidates()` trả về **đã sort** theo `rankCands` (TRUST+số khớp) → `showPicker()`, auto-pick (`__record`) và preview **dùng chung 1 thứ hạng** (click == ⭐). `showCssPick()` liệt kê CSS computed → `assert css` → `toHaveCSS`. Toolbar icon-only + nhóm `⋯` (state `more`). Cả 2 panel + toolbar KÉO được qua `makeDrag(handle,target)` (bỏ qua phần tử id `_x`).
+- **Đa tab (HẠN CHẾ):** recorder ghi MỌI action bằng biến `page`. Click mở **tab mới** → phải sửa tay spec: `const p2=page.waitForEvent('popup'); await ...click(); const np=await p2; np.locator(...)`. Modal **cùng tab** thì giữ nguyên biến tab.
 - **Toolbar bền:** guard `window.__recInjected` (đầu IIFE inject.js); recorder re-inject `p.on('domcontentloaded', () => p.evaluate(inject))` trong `attachNav`; `MutationObserver` cuối `ensureUI` tự gắn lại UI khi mất.
 - **Cửa sổ code:** context riêng (không bị ghi), dock qua CDP (maximize đo work-area), **`viewport:null`** cả app + code context. `currentSpec()` = `manualSpec` + action ghi sau `manualSavePoint` (chèn trước `});`); `renderCode` chỉ skip khi `window.__editMode`.
 - **State recorder** giữ ở Node (`__recGetState`/`__recSetState`). Kết thúc: `page.on('close')` / `browser disconnected` / SIGINT (KHÔNG `waitForEvent('close')`).

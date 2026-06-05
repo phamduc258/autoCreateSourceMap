@@ -104,7 +104,7 @@ async function dock(pg: Page, b: { left: number; top: number; width: number; hei
 interface Cand { kind: string; value: string; n?: number; fragile?: boolean; }
 interface Action {
   i: number; type: string; url: string; ts: number;
-  value?: string; key?: string; text?: string; assert?: string; file?: string; tag?: string; role?: string; name?: string;
+  value?: string; key?: string; text?: string; assert?: string; cssProp?: string; file?: string; tag?: string; role?: string; name?: string;
   fragile?: boolean; chosenKind?: string; chosenValue?: string;
   unique?: { best?: string; all: Cand[] };
   family?: null | { best?: string; count: number; all: Cand[]; within: string };
@@ -135,6 +135,7 @@ function bodyLine(a: Action, gotoDone: boolean): string {
       if (a.assert === 'visible') return `  await expect(${t}).toBeVisible();`;
       if (a.assert === 'text') return `  await expect(${t}).toContainText('${escStr(a.text)}');`;
       if (a.assert === 'value') return `  await expect(${t}).toHaveValue('${escStr(a.value)}');`;
+      if (a.assert === 'css') return `  await expect(${t}).toHaveCSS('${escStr(a.cssProp)}', '${escStr(a.value)}');`;
       return '';
     default: return '';
   }
@@ -180,7 +181,7 @@ async function writeOutput(actions: Action[]): Promise<void> {
     if (a.type === 'screenshot') { L.push(`${a.i}. **screenshot** -> \`${a.file}\``); continue; }
     let head;
     if (a.type === 'assert') {
-      const ex = a.assert === 'text' ? ` "${a.text ?? ''}"` : a.assert === 'value' ? ` = \`${a.value ?? ''}\`` : '';
+      const ex = a.assert === 'text' ? ` "${a.text ?? ''}"` : a.assert === 'value' ? ` = \`${a.value ?? ''}\`` : a.assert === 'css' ? ` ${a.cssProp} = \`${a.value ?? ''}\`` : '';
       head = `**assert ${a.assert}**${ex}`;
     } else {
       const val = a.value != null ? ` = \`${a.value}\`` : a.key ? ` [${a.key}]` : '';
@@ -242,7 +243,7 @@ async function main(): Promise<void> {
   await ctx.exposeBinding('__shot', async (source: any) => {
     const pg = source.page; shotN += 1; const rel = `shots/shot-${shotN}.png`;
     await fs.mkdir(path.join(DIR, 'shots'), { recursive: true });
-    const ids = ['__rec_ui', '__rec_codebox', '__rec_menu', '__rec_picker', '__rec_hl', '__rec_tip'];
+    const ids = ['__rec_ui', '__rec_codebox', '__rec_menu', '__rec_picker', '__rec_csspick', '__rec_hl', '__rec_tip'];
     await pg.evaluate((list: string[]) => list.forEach((id) => { const e: any = document.getElementById(id); if (e) { e.__prev = e.style.display; e.style.display = 'none'; } }), ids).catch(() => {}); // an UI recorder
     await pg.screenshot({ path: path.join(DIR, rel), fullPage: true }).catch(() => {});
     await pg.evaluate((list: string[]) => list.forEach((id) => { const e: any = document.getElementById(id); if (e) e.style.display = e.__prev || ''; }), ids).catch(() => {}); // hien lai UI
@@ -341,6 +342,11 @@ async function main(): Promise<void> {
     await page.evaluate(() => { (document.querySelector('[data-test="add-to-cart-sauce-labs-fleece-jacket"]') || document.body).dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 140, clientY: 140 })); });
     await page.click('#__rec_menu [data-k="click"]').catch(() => {});     // OFF -> log click NGAY, khong picker
     await page.waitForTimeout(200);
+    // Test assert CSS (List SL OFF -> best selector): css mode -> click element -> chon thuoc tinh dau
+    await page.evaluate(() => (window as any).__recSetInspect && (window as any).__recSetInspect('css'));
+    await page.click('.inventory_item_name'); // -> mo bang chon thuoc tinh CSS
+    await page.click('#__rec_csspick .__rec_csr'); // chon thuoc tinh dau (text-transform) -> log assert css
+    await page.waitForTimeout(200);
     await page.evaluate(() => (window as any).__shot && (window as any).__shot()); // chup screenshot
     await page.waitForTimeout(300);
     // Kiem thu SUA CODE truc tiep tren cua so live code
@@ -365,6 +371,8 @@ async function main(): Promise<void> {
     const winLen = await codePage.evaluate(() => (document.getElementById('code')?.textContent || '').length);
     const hasHl = await codePage.evaluate(() => (document.getElementById('code')?.innerHTML || '').includes('<span'));
     console.log(`CODE WINDOW: ${winLen} ky tu, highlight=${hasHl}`);
+    const cssA = actions.find((a) => a.type === 'assert' && a.assert === 'css');
+    console.log('CSS ASSERT:', cssA ? `toHaveCSS('${cssA.cssProp}','${String(cssA.value || '').slice(0, 20)}')` : '(KHONG co)');
   } else {
     // Cho VO THOI HAN: ket thuc khi dong trinh duyet hoac Ctrl+C.
     // (Truoc day dung page.waitForEvent('close') -> co timeout mac dinh 30s nen tu dung.)

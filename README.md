@@ -144,8 +144,12 @@ RECORD_CHANNEL=chrome npm run record -- <url> --name=TC004                    # 
 
 > 💡 Các biến trên cũng có thể đặt cố định trong `.env` để khỏi gõ lại mỗi lần (vd `RECORD_CHANNEL=chrome`).
 
-**Toolbar (đầu trang khi headed):** ☰ kéo · **● Rec** · **📋 List SL** · **🎯 Pick** · **👁 Visible** · **🔤 Text** · **= Value** · **📷 Shot** · **`</> Code`**.
-- **📋 List SL** (toggle, mặc định ON): ON = thao tác nhắm element (Pick/Assert/menu chuột phải) **mở bảng chọn selector**; OFF = **tự động lấy `best`** (như cũ).
+**Toolbar (đầu trang khi headed) — chỉ ICON, hover ra tooltip giải thích:**
+- **Chính (luôn hiện):** ☰ kéo · **●** Rec · **📋** List SL · **🎯** Pick · **⋯** More.
+- **Bấm ⋯ → nhóm tool phụ:** **👁** Visible · **🔤** Text · **=** Value · **🎨** CSS · **📷** Shot. (Mở ⋯ nở **sang phải**, không làm toolbar nhảy; trạng thái mở giữ qua chuyển trang.)
+- Đã **bỏ nút `</> Code`** vì có **cửa sổ live code** riêng (xem dưới).
+- **📋 List SL** (toggle, mặc định ON): ON = thao tác nhắm element (Pick/Assert/menu chuột phải) **mở bảng chọn selector**; OFF = **tự động lấy `best`** (== ⭐ đề xuất).
+- **🎨 CSS:** click element → bảng **thuộc tính CSS computed** (text-transform/color/font-size…) → chọn 1 → sinh `expect(...).toHaveCSS('prop','value')` (test kiểu hiển thị, vd chữ in HOA do `text-transform`).
 - **📷 Shot:** chụp full-page → `recording/<name>/shots/shot-N.png` (tự ẩn UI khi chụp) + log step `screenshot` (spec sinh `page.screenshot(...)`).
 - Assert/Pick: click element → (List SL ON) bảng chọn / (OFF) auto best. Esc hủy. Rec + List SL + vị trí toolbar + cửa sổ code **giữ qua chuyển trang**.
 - Toolbar bền trên **tab/popup mới** (link `target=_blank`): recorder **re-inject khi `domcontentloaded`** (phòng `addInitScript` bị miss → khỏi phải F5), có guard chống nhân đôi; và **tự gắn lại** nếu app SPA re-render `<body>` làm mất nó (MutationObserver).
@@ -157,6 +161,8 @@ RECORD_CHANNEL=chrome npm run record -- <url> --name=TC004                    # 
 Bảng chia **2 mục tách biệt**:
 - **SELECTOR CHO ELEMENT** — **tự sort theo độ uy tín + số khớp**: ưu tiên (1) khớp đúng 1 & không mong manh → (2) khớp đúng 1 nhưng positional 🔴 → (3) khớp nhiều `⚠N` → (4) không khớp; trong mỗi nhóm xếp theo độ tin cậy của *loại* selector (`testId` > `#id` > `role` > `label→input` > … > `class` > positional). Dòng đầu (tốt nhất) gắn **⭐ đề xuất**. Mỗi dòng hiển thị **số phần tử khớp** (`✓ 1` / `⚠ N` / `✗ 0` / `🔴 mong manh`). **Click 1 dòng để dùng** (+ copy).
 - **FAMILY — nhóm item lặp** (chỉ hiện khi element nằm trong list/bảng lặp): selector của *cụm item* (vd `.inventory_item`, `[data-test="inventory-item"]`) + `within` → để viết assertion "data có trong list": `locator(family).filter({ hasText: '…' }).<within>`. **Click để copy**.
+
+> 🖱️ **Bảng selector (và bảng 🎨 CSS) KÉO di chuyển được** — kéo phần **header**. **Selector lấy tự động khi click** (và khi List SL OFF) dùng **đúng thứ hạng** trên → trùng với **⭐ đề xuất** (1 nguồn duy nhất). Text trong assert lấy **`textContent`** nên khớp `toContainText`/`getByText` (không lệch khi trang dùng CSS `text-transform` in HOA).
 
 > 🏷️ **`label→input` — cho form custom (id/class đổi mỗi lần):** với ô nhập (text/textarea/select) không có `data-testid`/label chuẩn, tool tự sinh selector **neo theo TEXT của label** → leo lên cụm cha chứa control → đi xuống control:
 > ```
@@ -179,7 +185,7 @@ Bảng chia **2 mục tách biệt**:
 
 **Output** `recording/<name>/`:
 - `<name>.spec.ts` — code Playwright **chạy được** (giống codegen).
-- `<name>.json` — bản giàu cho **Claude**: mỗi action có `unique` (`best` = selector dùng, `all` = mọi biến thể kèm `n`/`fragile`) + `family` (nhóm item lặp + `within`) → assertion "data trong list": `locator.filter({ hasText }).<within>`. Action `pick` lưu `chosenKind`/`chosenValue`.
+- `<name>.json` — bản giàu cho **Claude**: mỗi action có `unique` (`best` = selector dùng, `all` = mọi biến thể kèm `n`/`fragile`) + `family` (nhóm item lặp + `within`) → assertion "data trong list": `locator.filter({ hasText }).<within>`. Action `pick` lưu `chosenKind`/`chosenValue`; action `assert` có `assert` = `visible`/`text`/`value`/`css` (css kèm `cssProp`).
 - `<name>.md` — đọc cho người.
 - `shots/shot-N.png` — ảnh chụp khi bấm 📷 Shot (nếu có).
 
