@@ -176,12 +176,14 @@ Bảng chia **2 mục tách biệt**:
 > ```
 > Selector này **chỉ phụ thuộc chữ trên label** (bền khi id/class/vị trí đổi giữa các lần run hoặc giữa các form custom khác nhau), chạy cho cả layout **bảng lẫn div-grid**, kể cả input nằm rất sâu trong cụm và field có annotation. Khi ô không có `#id`/`[name]` ổn định, đây là lựa chọn **"đề xuất"** (ưu tiên hơn `.class`/positional). *(radio/checkbox dùng `getByRole` chứ không dùng cách này. Class kiểu `jss378`/`css-1a2` bị coi là tự sinh → không dùng làm neo.)*
 
-**Cửa sổ code riêng** mở **bên phải** app (phủ kín phần còn lại của màn hình): hiện spec **live + syntax highlight**, cập nhật theo từng thao tác.
-- **Sửa trực tiếp (có syntax highlight ngay trong ô sửa):**
-  - **✏️ Edit** → vào chế độ sửa tay (auto-update tạm dừng, vẫn tô màu code).
-  - **💾 Save** → ghi vào `<name>.spec.ts` + **tự quay về khung hiển thị** bản vừa sửa. **Thao tác mới ghi sau đó vẫn được NỐI TIẾP** vào cuối bản sửa tay (chèn trước `});`) — không bị mất.
-  - **↺ Live** → bỏ bản sửa tay, quay lại spec tự sinh đầy đủ từ thao tác.
-  - **Copy** → chép nội dung đang hiển thị.
+**Cửa sổ code riêng** mở **bên phải** app — **1 EDITOR DUY NHẤT** (luôn sửa được; số dòng + syntax highlight). Không còn tách Live/Edit.
+- **Vừa tự sinh vừa sửa tay:** thao tác mới **tự chèn** vào editor — tại **dòng con trỏ** nếu con trỏ đang trong thân test (`=> { … });`), ngược lại **chèn cuối thân** — **không ghi đè** phần bạn đang sửa, giữ nguyên con trỏ.
+- **TỰ ĐỘNG LƯU** vào `<name>.spec.ts` sau ~700ms ngừng gõ (header hiện **"💾 Đã lưu ✔"** / **"✏️ chưa lưu…"**). Không cần bấm Save; **Ctrl+S** để lưu ngay.
+- **Undo/Redo** (↶/↷ hoặc **Ctrl+Z / Ctrl+Y**): tự quản lý lịch sử → hoàn tác được **cả phần sửa tay LẪN action vừa chèn** (kể cả "lỡ ghi nhầm 1 thao tác").
+- **Phím tắt:** **Tab/Shift+Tab** thụt lề · **Ctrl+/** comment · **Ctrl+D** nhân dòng · **Alt+↑/↓** chuyển dòng (hover tiêu đề xem danh sách).
+- **Copy** → chép nội dung (báo **"Đã chép ✔"**). Dòng selector **positional** đánh dấu bằng comment **`// 🔴 selector mong manh`**.
+
+> 🧭 **Điều hướng:** click link → `// -> URL` (comment, vì click đã điều hướng) · bấm **Back/Forward** trình duyệt → `await page.goBack()` / `page.goForward()` · URL đầu → `page.goto(...)`.
 
 **Output** `recording/<name>/`:
 - `<name>.spec.ts` — code Playwright **chạy được** (giống codegen).

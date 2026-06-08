@@ -40,7 +40,7 @@ crawler/                  # TOOL A — crawl tự động theo config
   crawl.ts                # login → quét → VERIFY count() → xuất index.md + screens/*.md
   extract.ts              # chạy trong browser: quét element + sinh ứng viên selector
 recorder/                 # TOOL B — ghi thao tác kiểu codegen (xem mục 9)
-  record.ts               # Node: bindings, toSpec/currentSpec, cửa sổ code, dock, state, channel
+  record.ts               # Node: bindings, specLines/currentSpec, cửa sổ code, dock, state, channel
   inject.js               # chạy trong trang: toolbar + sinh selector (unique/family/label→input) + picker
 output/                   # (gitignored) kết quả crawl
 recording/<name>/         # kết quả record: {.json, .md, .spec.ts, shots/} (output, xóa được)
@@ -90,12 +90,17 @@ RECORD_TIMEOUT=120000 npm run record -- <url> --name=TC003                    # 
 **`label→input` (CỐT LÕI cho form custom id/class đổi):** neo theo TEXT label → leo lên cụm cha chứa control → xuống control:
 `(//*[normalize-space()="<label>"])[1]/ancestor-or-self::*[.//<tag>][1]/descendant::<tag>[1]`. **Tự kiểm chứng** (đánh giá xpath, so `=== el` đúng element vừa chọn); nếu trùng tên ở nơi khác (vd dropdown header ngoài modal) → **tự bọc scope** `aria-modal`/`role`/`aria-label`/`#id` rồi verify lại. Chỉ sinh cho **text/textarea/select** (radio/checkbox dùng `getByRole`).
 
-**Cửa sổ code riêng** (context riêng, dock phải, **`viewport:null`** nên nút không bị cắt):
-- **✏️ Edit** → sửa tay **có syntax highlight** (overlay) · **💾 Save** → ghi file + **về khung hiển thị**, và **thao tác mới ghi sau vẫn NỐI TIẾP** vào bản sửa (chèn trước `});`) · **↺ Live** → bỏ bản sửa, về tự sinh · **Copy**.
+**Cửa sổ code riêng** (context riêng, dock phải, **`viewport:null`**) — **1 EDITOR DUY NHẤT** (luôn sửa được; số dòng + syntax highlight overlay). **Bỏ tách Live/Edit + structured-delete.**
+- **Tự sinh + sửa tay chung 1 chỗ:** action mới **tự chèn** (tại **dòng con trỏ** nếu con trỏ trong thân `=> {…});`, ngược lại **cuối thân**), **giữ nguyên** phần đang sửa + con trỏ (`setRangeText 'preserve'`).
+- **AUTO-SAVE** vào `.spec.ts` sau 700ms ngừng (header "💾 Đã lưu ✔" / "✏️ chưa lưu…"). Không nút Save/Tạo lại; **Ctrl+S** lưu ngay.
+- **Undo/redo TỰ QUẢN LÝ** (snapshot): phủ **cả sửa tay LẪN action chèn** (native bị `setRangeText` phá). ↶/↷ · Ctrl+Z/Ctrl+Y.
+- **Phím tắt:** Tab/Shift+Tab thụt lề · Ctrl+/ comment · Ctrl+D nhân dòng · Alt+↑/↓ chuyển dòng · Ctrl+S lưu (hover tiêu đề xem list).
+- **Nguồn sự thật = nội dung editor** → `.spec.ts` cuối = đúng editor (`actions` chỉ để sinh `.json`). Fragile → comment `// 🔴` inline. **Copy** (báo "Đã chép ✔").
 
 **🎨 CSS (assert CSS):** bấm 🎨 → click element → bảng **thuộc tính CSS computed** (text-transform/color/font-size…) → chọn 1 → sinh `expect(...).toHaveCSS('prop','value')` (test kiểu hiển thị, vd chữ in HOA do `text-transform`). **Text assert lấy `textContent`** (không `innerText`) → khớp `toContainText`/`getByText` (không lệch khi CSS in HOA).
 
-**Type action `.json`:** navigate · click · rightclick · dblclick · hover · fill · select · press · pick · assert(visible/text/value/**css** kèm `cssProp`) · screenshot.
+**Type action `.json`:** navigate · **goback · goforward** · click · rightclick · dblclick · hover · fill · select · press · pick · assert(visible/text/value/**css** kèm `cssProp`) · screenshot.
+- **Điều hướng:** click link → `// -> URL` (comment) · **Back/Forward** trình duyệt → `page.goBack()`/`goForward()` · URL đầu → `page.goto()`.
 
 **Độ bền selector:** positional (`cssPath`/`xpathPath`) gắn 🔴 *fragile*, cảnh báo trong `.md`/header `.spec.ts`. `looksGenerated` loại class tự sinh **kể cả `jssNNN`/`css-1a2`** (không chặn Mui-*/BEM).
 
@@ -111,7 +116,8 @@ RECORD_TIMEOUT=120000 npm run record -- <url> --name=TC003                    # 
 - **Picker/CSS-pick + xếp hạng:** `uniqueCandidates()` trả về **đã sort** theo `rankCands` (TRUST+số khớp) → `showPicker()`, auto-pick (`__record`) và preview **dùng chung 1 thứ hạng** (click == ⭐). `showCssPick()` liệt kê CSS computed → `assert css` → `toHaveCSS`. Toolbar icon-only + nhóm `⋯` (state `more`). Cả 2 panel + toolbar KÉO được qua `makeDrag(handle,target)` (bỏ qua phần tử id `_x`).
 - **Đa tab (HẠN CHẾ):** recorder ghi MỌI action bằng biến `page`. Click mở **tab mới** → phải sửa tay spec: `const p2=page.waitForEvent('popup'); await ...click(); const np=await p2; np.locator(...)`. Modal **cùng tab** thì giữ nguyên biến tab.
 - **Toolbar bền:** guard `window.__recInjected` (đầu IIFE inject.js); recorder re-inject `p.on('domcontentloaded', () => p.evaluate(inject))` trong `attachNav`; `MutationObserver` cuối `ensureUI` tự gắn lại UI khi mất.
-- **Cửa sổ code:** context riêng (không bị ghi), dock qua CDP (maximize đo work-area), **`viewport:null`** cả app + code context. `currentSpec()` = `manualSpec` + action ghi sau `manualSavePoint` (chèn trước `});`); `renderCode` chỉ skip khi `window.__editMode`.
+- **Cửa sổ code (1 editor):** context riêng, dock CDP, **`viewport:null`**. `specLines()` sinh `{text,meta}` (`act`=index action, `fragile`) → `renderCode` → `window.__renderSpec`: lần đầu nạp full, sau đó **chèn action mới** (act ≥ `__applied`) qua `setRangeText(...,'preserve')` tại `insertPoint()` (con trỏ trong thân `=> {…});`? dòng con trỏ : cuối thân). Undo/redo = **stack snapshot tự quản** (`commit/flush/restore` quanh mọi mutation; chặn Ctrl+Z native). **Auto-save:** `scheduleSave()` debounce 700ms trong `sync()` → `__saveCode` ghi file; `writeOutput` kéo `#ed` làm `.spec.ts`. Đã bỏ `manualSpec`/`__recUndo`/`__recDeleteStep`/Edit-Live.
+- **Back/Forward:** `pushNav` dùng `navState` (lịch sử URL mỗi tab) → URL khớp mục kề **và KHÔNG do click <1s** → `goback`/`goforward`; còn lại `navigate` (đầu→`goto`, sau→comment).
 - **State recorder** giữ ở Node (`__recGetState`/`__recSetState`). Kết thúc: `page.on('close')` / `browser disconnected` / SIGINT (KHÔNG `waitForEvent('close')`).
 - `extract.ts` (crawler) testid attribute-aware (`data-test`...) + quét `[data-test*]`/`[data-cy]`/`[data-qa]`; `looksGenerated` cũng đã sửa bắt `jssNNN`.
 

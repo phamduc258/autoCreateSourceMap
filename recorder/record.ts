@@ -31,66 +31,97 @@ const CODE_HTML = `<!doctype html><html><head><meta charset="utf-8"><title>Recor
 <style>body{margin:0;background:#0b1020;color:#e5e7eb;font:13px/1.6 ui-monospace,Consolas,monospace}
 header{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;background:#111827;color:#9ca3af;font:13px sans-serif;position:sticky;top:0;z-index:2}
 button{cursor:pointer;border:0;border-radius:6px;padding:5px 10px;background:#374151;color:#fff;font:12px sans-serif;margin-left:4px}
-/* view + overlay sua DUNG CHUNG font/padding/wrap de canh thang hang */
-#code,#codeHl,#codeEdit{margin:0;padding:12px 14px;font:13px/1.6 ui-monospace,Consolas,monospace;white-space:pre-wrap;word-break:break-word;box-sizing:border-box;border:0}
-#code{min-height:calc(100vh - 46px)}
-.editwrap{display:none;position:relative;height:calc(100vh - 46px)}
-#codeHl{position:absolute;inset:0;overflow:hidden;color:#e5e7eb}
-#codeEdit{position:absolute;inset:0;overflow:auto;background:transparent;color:transparent;caret-color:#e5e7eb;outline:0;resize:none}
+.wrap{position:relative;height:calc(100vh - 46px)}
+#ln{position:absolute;left:0;top:0;width:46px;height:100%;padding:12px 6px 12px 0;box-sizing:border-box;text-align:right;color:#475569;font:13px/1.6 ui-monospace,Consolas,monospace;white-space:pre;overflow:hidden;user-select:none;background:#0b1020;z-index:1}
+#hl,#ed{margin:0;padding:12px 14px 12px 54px;font:13px/1.6 ui-monospace,Consolas,monospace;white-space:pre;box-sizing:border-box;border:0}
+#hl{position:absolute;inset:0;overflow:hidden;color:#e5e7eb}
+#ed{position:absolute;inset:0;overflow:auto;background:transparent;color:transparent;caret-color:#e5e7eb;outline:0;resize:none}
 .cm{color:#6b7280;font-style:italic}.st{color:#fbbf24}.kw{color:#c084fc}.id{color:#34d399}.fn{color:#60a5fa}</style></head>
-<body><header><b id="title">Generated spec (live)</b><span><button id="btnEdit">✏️ Edit</button><button id="btnSave" style="display:none">💾 Save</button><button id="btnLive" style="display:none">↺ Live</button><button id="btnCopy">Copy</button></span></header>
-<pre id="code">// Chua co thao tac. Hay thao tac tren cua so trang ben canh...</pre>
-<div class="editwrap" id="editwrap"><pre id="codeHl"></pre><textarea id="codeEdit" spellcheck="false"></textarea></div>
+<body><header><b id="title" title="Phim tat: Tab/Shift+Tab thut le · Ctrl+/ comment · Ctrl+D nhan dong · Alt+Up/Down chuyen dong · Ctrl+S luu · Ctrl+Z/Y undo">Code — sua truc tiep · thao tac moi tu dong chen</b><span><button id="bUndo" title="Hoan tac (Ctrl+Z)">↶</button><button id="bRedo" title="Lam lai (Ctrl+Y)">↷</button><span id="stat" title="Tu dong luu vao .spec.ts (Ctrl+S de luu ngay)" style="color:#34d399;font:12px sans-serif;padding:0 8px">💾 Da luu</span><button id="bCopy">Copy</button></span></header>
+<div class="wrap"><div id="ln"></div><pre id="hl"></pre><textarea id="ed" spellcheck="false">// Chua co thao tac. Thao tac tren cua so trang ben canh (hoac go truc tiep o day).</textarea></div>
 <script>
 (function(){
   var $=function(id){return document.getElementById(id);};
   function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-  // Highlight 1 doan code -> HTML. Dung CHUNG cho: live view, overlay khi sua, va sau khi Save.
-  window.__hl=function(c){return String(c==null?'':c).split('\\n').map(function(line){
+  window.__hl1=function(line){
     var h=esc(line);
     if(line.replace(/^\\s+/,'').indexOf('//')===0) return '<span class="cm">'+h+'</span>';
     h=h.replace(/('[^']*')/g,'<span class="st">$1</span>');
-    h=h.replace(/\\b(import|from|test|async|await|const|let|return)\\b/g,'<span class="kw">$1</span>');
+    h=h.replace(/\\b(import|from|test|async|await|const|let|return|true|false|null)\\b/g,'<span class="kw">$1</span>');
     h=h.replace(/\\b(page|expect)\\b/g,'<span class="id">$1</span>');
     h=h.replace(/\\.([a-zA-Z]\\w*)/g,'.<span class="fn">$1</span>');
     return h;
-  }).join('\\n');};
-  function syncHl(){$('codeHl').innerHTML=window.__hl($('codeEdit').value);}
-  function showView(){$('editwrap').style.display='none';$('code').style.display='block';}
-  function showEdit(){$('code').style.display='none';$('editwrap').style.display='block';}
-  function btns(state){ // 'view' | 'editing' | 'manual'
-    $('btnEdit').style.display=state==='editing'?'none':'';
-    $('btnSave').style.display=state==='editing'?'':'none';
-    $('btnLive').style.display=(state==='editing'||state==='manual')?'':'none';
+  };
+  function hl(){ $('hl').innerHTML=String($('ed').value).split('\\n').map(window.__hl1).join('\\n'); }
+  function gutter(){ var n=$('ed').value.split('\\n').length,g='',i; for(i=1;i<=n;i++)g+=i+'\\n'; $('ln').textContent=g; }
+  var saveTimer=null;
+  function setStat(s){ var el=$('stat'); if(!el)return; if(s==='dirty'){ el.textContent='✏️ chua luu…'; el.style.color='#fbbf24'; } else { el.textContent='💾 Da luu ✔'; el.style.color='#34d399'; } }
+  function scheduleSave(){ setStat('dirty'); clearTimeout(saveTimer); saveTimer=setTimeout(doSave,700); } // AUTO-SAVE sau 700ms idle
+  function sync(){ hl(); gutter(); var ta=$('ed'); $('hl').scrollTop=ta.scrollTop; $('hl').scrollLeft=ta.scrollLeft; $('ln').scrollTop=ta.scrollTop; scheduleSave(); }
+  // === Undo/redo TU QUAN LY (native bi setRangeText pha) -> phu CA go tay LAN action chen ===
+  var hist=[],hpos=-1,htimer=null;
+  function snap(){ var ta=$('ed'); return {v:ta.value,s:ta.selectionStart,e:ta.selectionEnd}; }
+  function commit(){ var cur=snap(); if(hpos>=0&&hist[hpos]&&hist[hpos].v===cur.v){ hist[hpos]=cur; return; } hist=hist.slice(0,hpos+1); hist.push(cur); hpos=hist.length-1; if(hist.length>300){ hist.shift(); hpos--; } }
+  function flush(){ clearTimeout(htimer); htimer=null; commit(); }
+  function restore(st){ var ta=$('ed'); ta.value=st.v; try{ ta.setSelectionRange(st.s,st.e); }catch(e){} sync(); }
+  function undo(){ flush(); if(hpos>0){ hpos--; restore(hist[hpos]); } }
+  function redo(){ if(hpos<hist.length-1){ hpos++; restore(hist[hpos]); } }
+  function resetHist(){ hist=[snap()]; hpos=0; }
+  function tabIndent(shift){ // Tab = 2 space (con tro) hoac indent/unindent cac dong da chon; KHONG nhay focus
+    flush(); var ta=$('ed'), v=ta.value, s=ta.selectionStart, e=ta.selectionEnd, T='  ';
+    if(s===e&&!shift){ ta.setRangeText(T,s,e,'end'); sync(); commit(); return; }
+    var ls=v.lastIndexOf('\\n',s-1)+1, le=v.indexOf('\\n',e>s?e-1:e); if(le<0)le=v.length;
+    var out=v.slice(ls,le).split('\\n').map(function(ln){ return shift?ln.replace(/^(\\t| {1,2})/,''):T+ln; }).join('\\n');
+    ta.setRangeText(out,ls,le,'select'); sync(); commit();
   }
-  $('btnCopy').onclick=function(){try{navigator.clipboard.writeText(window.__editMode?$('codeEdit').value:$('code').textContent);}catch(e){}};
-  $('btnEdit').onclick=function(){
-    window.__editMode=true;
-    $('codeEdit').value=($('code').textContent||window.__lastCode||'').replace(/\\n+$/,'');
-    syncHl();showEdit();btns('editing');
-    $('title').textContent='Edit spec (sua tay) - auto-update tam dung';
-    $('codeEdit').focus();
+  function lineRange(){ var ta=$('ed'),v=ta.value,s=ta.selectionStart,e=ta.selectionEnd; var ls=v.lastIndexOf('\\n',s-1)+1, le=v.indexOf('\\n',e>s?e-1:e); if(le<0)le=v.length; return {v:v,ls:ls,le:le}; }
+  function insertPoint(){ // chen action moi: tai DONG CON TRO neu con tro trong than test; nguoc lai -> cuoi than (truoc dong dong-cua)
+    var ta=$('ed'), v=ta.value, cur=ta.selectionStart, endIdx=v.lastIndexOf('});'); if(endIdx<0)endIdx=v.length;
+    var op=v.indexOf('=> {'), bodyStart=op>=0?v.indexOf('\\n',op)+1:-1;
+    if(bodyStart>0&&cur>=bodyStart&&cur<=endIdx) return {at:v.lastIndexOf('\\n',cur-1)+1, mode:'end'};  // trong than -> dau dong con tro, con tro nhay xuong
+    return {at:endIdx, mode:'preserve'};                                                                  // ngoai than -> cuoi than, giu con tro
+  }
+  function toggleComment(){ flush(); var r=lineRange(), L=r.v.slice(r.ls,r.le).split('\\n'), single=L.length===1; var consider=single?L:L.filter(function(ln){return ln.trim()!=='';}); if(!consider.length)consider=L; var allC=consider.every(function(ln){return /^\\s*\\/\\//.test(ln);}); var out=L.map(function(ln){ if(!single&&ln.trim()==='')return ln; return allC?ln.replace(/^(\\s*)\\/\\/ ?/,'$1'):ln.replace(/^(\\s*)/,'$1// '); }).join('\\n'); $('ed').setRangeText(out,r.ls,r.le,'select'); sync(); commit(); } // Ctrl+/ (1 dong: comment ca khi rong)
+  function dupLine(){ flush(); var r=lineRange(); $('ed').setRangeText('\\n'+r.v.slice(r.ls,r.le), r.le, r.le, 'end'); sync(); commit(); } // Ctrl+D
+  function moveLines(dir){ flush(); var ta=$('ed'),v=ta.value,s=ta.selectionStart,e=ta.selectionEnd,lines=v.split('\\n'); var a=v.slice(0,s).split('\\n').length-1, b=v.slice(0,e>s?e-1:e).split('\\n').length-1; if((dir<0&&a===0)||(dir>0&&b===lines.length-1))return; var blk=lines.splice(a,b-a+1); lines.splice.apply(lines,[a+dir,0].concat(blk)); ta.value=lines.join('\\n'); var na=a+dir, off=lines.slice(0,na).join('\\n').length+(na>0?1:0), bt=lines.slice(na,na+blk.length).join('\\n'); ta.selectionStart=off; ta.selectionEnd=off+bt.length; sync(); commit(); } // Alt+Up/Down
+  function setDoc(text,count){ $('ed').value=String(text==null?'':text).replace(/\\n+$/,''); window.__applied=count||0; window.__docInit=true; window.__lastCode=$('ed').value; sync(); }
+  window.__setFullDoc=setDoc;
+  var titleBase='Code — sua truc tiep · thao tac moi tu dong chen';
+  function flash(msg){ $('title').textContent=msg; clearTimeout(window.__tt); window.__tt=setTimeout(function(){ $('title').textContent=titleBase; },1700); }
+  // Node goi moi khi co thay doi. Lan dau: nap toan bo. Sau do: chi CHEN action moi (act>=applied) vao truoc dong dong-cua, GIU sua tay + con tro.
+  window.__renderSpec=function(text,meta){
+    meta=meta||[]; var lines=String(text).split('\\n'); window.__lastCode=text;
+    if(!window.__docInit){ var c=0,j; for(j=0;j<meta.length;j++){ if(meta[j]&&meta[j].act!=null&&meta[j].act+1>c)c=meta[j].act+1; } setDoc(text,c); resetHist(); return; }
+    var add=[],maxA=window.__applied,i,m;
+    for(i=0;i<meta.length;i++){ m=meta[i]; if(m&&m.act!=null&&m.act>=window.__applied){ add.push(lines[i]); if(m.act+1>maxA)maxA=m.act+1; } }
+    if(add.length){
+      window.__applied=maxA; flush();            // chot trang thai TRUOC khi chen -> 1 buoc undo
+      var ta=$('ed'), ip=insertPoint();
+      ta.setRangeText(add.join('\\n')+'\\n', ip.at, ip.at, ip.mode); sync(); commit();
+      flash('⬇ +'+add.length+' thao tac moi'+(ip.mode==='end'?' (tai con tro)':'')+' · undo duoc');
+    }
   };
-  $('btnSave').onclick=function(){
-    var text=$('codeEdit').value;
-    if(window.__saveCode)window.__saveCode(text);
-    window.__editMode=false;window.__lastCode=text;
-    $('code').innerHTML=window.__hl(text);          // ap dung ban sua tay vao view (co highlight)
-    showView();btns('manual');
-    $('title').textContent='Da luu ✔ — thao tac moi se noi tiep ban sua tay (↺ Live = bo sua tay, ve auto)';
-  };
-  $('btnLive').onclick=function(){
-    window.__editMode=false;
-    showView();btns('view');
-    $('title').textContent='Generated spec (live)';
-    if(window.__resetCode)window.__resetCode();      // Node: manualSpec=null + renderCode auto-gen
-  };
-  $('codeEdit').addEventListener('input',syncHl);
-  $('codeEdit').addEventListener('scroll',function(){$('codeHl').scrollTop=$('codeEdit').scrollTop;$('codeHl').scrollLeft=$('codeEdit').scrollLeft;});
+  function copyFlash(){ var b=$('bCopy'),o=b.textContent; b.textContent='Da chep ✔'; setTimeout(function(){b.textContent=o;},1000); }
+  $('bCopy').onclick=function(){ try{ navigator.clipboard.writeText($('ed').value); copyFlash(); }catch(e){} };
+  $('bUndo').onclick=function(){ $('ed').focus(); undo(); };
+  $('bRedo').onclick=function(){ $('ed').focus(); redo(); };
+  function doSave(){ clearTimeout(saveTimer); if(window.__saveCode)window.__saveCode($('ed').value); setStat('saved'); } // tu dong goi (sync) + Ctrl+S
+  $('ed').addEventListener('input',function(){ sync(); clearTimeout(htimer); htimer=setTimeout(commit,400); }); // go tay -> commit sau 400ms idle
+  $('ed').addEventListener('keydown',function(e){
+    var k=e.key, ctrl=(e.ctrlKey||e.metaKey);
+    if(k==='Tab'){ e.preventDefault(); tabIndent(e.shiftKey); return; }                 // thut le
+    if(ctrl&&k==='/'){ e.preventDefault(); toggleComment(); return; }                    // comment //
+    if(ctrl&&(k==='s'||k==='S')){ e.preventDefault(); doSave(); return; }                // luu
+    if(ctrl&&(k==='d'||k==='D')){ e.preventDefault(); dupLine(); return; }               // nhan dong
+    if(e.altKey&&k==='ArrowUp'){ e.preventDefault(); moveLines(-1); return; }            // chuyen dong len
+    if(e.altKey&&k==='ArrowDown'){ e.preventDefault(); moveLines(1); return; }           // chuyen dong xuong
+    var z=(k==='z'||k==='Z'),y=(k==='y'||k==='Y');
+    if(ctrl&&z&&!e.shiftKey){ e.preventDefault(); undo(); }
+    else if(ctrl&&(y||(z&&e.shiftKey))){ e.preventDefault(); redo(); }
+  });
+  $('ed').addEventListener('scroll',function(){ var ta=$('ed'); $('hl').scrollTop=ta.scrollTop; $('hl').scrollLeft=ta.scrollLeft; $('ln').scrollTop=ta.scrollTop; });
 })();
 </script></body></html>`;
-let manualSpec: string | null = null; // code user sua tay (base). null = dang auto-gen.
-let manualSavePoint = 0;               // so action tai thoi diem Save -> action ghi SAU se noi tiep vao base
 
 // Xep vi tri/kich thuoc 1 cua so (Chromium, qua CDP). Headless thi bo qua.
 async function dock(pg: Page, b: { left: number; top: number; width: number; height: number }): Promise<void> {
@@ -120,6 +151,8 @@ function asLocator(best?: string): string {
 // 1 dong code cho 1 action (gotoDone=true -> navigate thanh comment vi da co goto dau).
 function bodyLine(a: Action, gotoDone: boolean): string {
   if (a.type === 'navigate') return gotoDone ? `  // -> ${a.url}` : `  await page.goto('${escStr(a.url)}');`;
+  if (a.type === 'goback') return `  await page.goBack();   // -> ${a.url}`;
+  if (a.type === 'goforward') return `  await page.goForward();   // -> ${a.url}`;
   if (a.type === 'screenshot') return `  await page.screenshot({ path: '${a.file}', fullPage: true });`;
   const t = asLocator(a.unique?.best);
   switch (a.type) {
@@ -141,36 +174,36 @@ function bodyLine(a: Action, gotoDone: boolean): string {
   }
 }
 
-// Sinh Playwright spec tu cac action da ghi (dung selector unique.best, giong codegen).
-function toSpec(acts: Action[]): string {
+// Sinh cac DONG spec + metadata (act = vi tri trong actions[] de XOA buoc, fragile) — dung chung cho text
+// (currentSpec) va render co cau truc o cua so code (so dong / nut xoa / co fragile).
+type SpecLine = { line: string; act: number | null; fragile: boolean };
+function specLines(acts: Action[]): SpecLine[] {
+  const out: SpecLine[] = [];
+  const add = (line: string, act: number | null = null, fragile = false) => out.push({ line, act, fragile });
   const fragileN = acts.filter((a) => a.fragile).length;
-  const L = [`import { test, expect } from '@playwright/test';`, ''];
-  if (fragileN) L.push(`// ⚠ ${fragileN} selector mong manh (positional) — nen thay bang data-testid. Chi tiet o file .md.`, '');
-  L.push(`test('${NAME}', async ({ page }) => {`);
+  add(`import { test, expect } from '@playwright/test';`);
+  add('');
+  if (fragileN) { add(`// ⚠ ${fragileN} selector mong manh (🔴) — nen thay bang data-testid.`); add(''); }
+  add(`test('${NAME}', async ({ page }) => {`);
   let gotoDone = false;
-  for (const a of acts) {
-    const line = bodyLine(a, gotoDone);
+  acts.forEach((a, idx) => {
+    let line = bodyLine(a, gotoDone);
     if (a.type === 'navigate') gotoDone = true;
-    if (line) L.push(line);
-  }
-  L.push('});', '');
-  return L.join('\n');
+    if (line) { if (a.fragile) line += '  // 🔴 selector mong manh'; add(line, idx, !!a.fragile); } // act -> actions[idx]; fragile -> comment inline
+  });
+  add('});');
+  add('');
+  return out;
 }
 
-// Spec dang dung: neu co ban sua tay -> giu base do va NOI TIEP cac action ghi sau khi Save
-// (chen truoc dau `});`). Khong co ban sua tay -> auto-gen day du.
+// Code TU SINH tu thao tac (cho lan nap dau + nut "Tao lai"). User sua truc tiep tren cua so -> textarea la nguon that.
 function currentSpec(acts: Action[]): string {
-  if (manualSpec == null) return toSpec(acts);
-  const extra = acts.slice(manualSavePoint).map((a) => bodyLine(a, true)).filter(Boolean);
-  if (!extra.length) return manualSpec;
-  const block = extra.join('\n') + '\n';
-  const idx = manualSpec.lastIndexOf('});');
-  return idx === -1 ? `${manualSpec}\n${block}` : manualSpec.slice(0, idx) + block + manualSpec.slice(idx);
+  return specLines(acts).map((l) => l.line).join('\n');
 }
 
-async function writeOutput(actions: Action[]): Promise<void> {
+async function writeOutput(actions: Action[], docText?: string | null): Promise<void> {
   await fs.writeFile(path.join(DIR, `${NAME}.json`), JSON.stringify(actions, null, 2));
-  await fs.writeFile(path.join(DIR, `${NAME}.spec.ts`), currentSpec(actions)); // ban sua tay (+ action noi tiep) > auto-gen
+  await fs.writeFile(path.join(DIR, `${NAME}.spec.ts`), (docText && docText.trim()) ? docText : currentSpec(actions)); // .spec.ts = noi dung editor (neu lay duoc) > auto-gen
 
   const fragileN = actions.filter((a) => a.fragile).length;
   const L: string[] = [`# Recording: ${NAME}`, '', `Bat dau: ${START_URL}`, '',
@@ -178,6 +211,8 @@ async function writeOutput(actions: Action[]): Promise<void> {
     '', 'n = so element khop. unique nen n=1. family = nhom item lap (n>=2) -> .filter({hasText}).', ''];
   for (const a of actions) {
     if (a.type === 'navigate') { L.push(`${a.i}. **navigate** -> ${a.url}`); continue; }
+    if (a.type === 'goback') { L.push(`${a.i}. **goBack** -> ${a.url}`); continue; }
+    if (a.type === 'goforward') { L.push(`${a.i}. **goForward** -> ${a.url}`); continue; }
     if (a.type === 'screenshot') { L.push(`${a.i}. **screenshot** -> \`${a.file}\``); continue; }
     let head;
     if (a.type === 'assert') {
@@ -255,19 +290,27 @@ async function main(): Promise<void> {
   const inject = await fs.readFile(path.join(process.cwd(), 'recorder', 'inject.js'), 'utf8');
   await ctx.addInitScript({ content: inject });
 
-  const pushNav = (url: string) => {
+  // Lich su URL moi tab -> phat hien nut Back/Forward (URL khop muc ke lich su + KHONG do click vua roi gay ra).
+  const navState = new WeakMap<Page, { hist: string[]; idx: number }>();
+  const pushNav = (p: Page, url: string) => {
     if (recState.paused) return;             // Rec off -> khong ghi navigate
+    let st = navState.get(p); if (!st) { st = { hist: [], idx: -1 }; navState.set(p, st); }
+    if (st.hist[st.idx] === url) return;     // dedupe (framenavigated co the ban nhieu lan cho 1 lan dieu huong)
     const last = actions[actions.length - 1];
-    if (last && last.type === 'navigate' && last.url === url) return; // dedupe URL lien tiep
-    actions.push({ i: actions.length + 1, type: 'navigate', url, ts: Date.now() });
-    console.log(`#${actions.length} navigate ${url}`);
+    const clickInduced = !!last && ['click', 'dblclick', 'rightclick', 'press', 'fill', 'select'].includes(last.type) && (Date.now() - (last.ts || 0) < 1000);
+    let type = 'navigate';
+    if (!clickInduced && st.hist[st.idx - 1] === url) { st.idx--; type = 'goback'; }          // nut Back
+    else if (!clickInduced && st.hist[st.idx + 1] === url) { st.idx++; type = 'goforward'; }   // nut Forward
+    else { st.hist = st.hist.slice(0, st.idx + 1); st.hist.push(url); st.idx++; }              // dieu huong moi (do click hoac URL moi)
+    actions.push({ i: actions.length + 1, type, url, ts: Date.now() });
+    console.log(`#${actions.length} ${type} ${url}`);
     renderCode();
   };
   const tracked = new WeakSet<Page>();
   const attachNav = (p: Page): void => {
     if (tracked.has(p)) return;
     tracked.add(p);
-    p.on('framenavigated', (f) => { if (f === p.mainFrame()) pushNav(f.url()); });
+    p.on('framenavigated', (f) => { if (f === p.mainFrame()) pushNav(p, f.url()); });
     // Re-inject DU PHONG: tren tab/popup moi, addInitScript doi khi bi MISS (toolbar khong hien, phai F5).
     // Moi lan DOM san sang -> chay lai inject; guard window.__recInjected lo viec no-op neu da inject.
     p.on('domcontentloaded', () => p.evaluate(inject).catch(() => {}));
@@ -284,16 +327,18 @@ async function main(): Promise<void> {
   // CUA SO RIENG hien code (context rieng -> khong bi recorder chen UI, khong bi ghi)
   const codeCtx = await browser.newContext({ viewport: null }); // co theo cua so -> nut Edit/Save/Copy khong bi tran ra ngoai
   await codeCtx.addInitScript('window.__name = window.__name || function (f) { return f; };'); // tranh loi __name khi highlight
-  await codeCtx.exposeBinding('__saveCode', async (_s: any, text: string) => { manualSpec = text; manualSavePoint = actions.length; await fs.writeFile(path.join(DIR, `${NAME}.spec.ts`), text).catch(() => {}); console.log(`✔ Da luu code sua tay -> ${NAME}.spec.ts (action ghi tiep se noi vao day)`); });
-  await codeCtx.exposeBinding('__resetCode', async () => { manualSpec = null; await renderCode(); }); // ve auto-gen
+  await codeCtx.exposeBinding('__saveCode', async (_s: any, text: string) => { await fs.writeFile(path.join(DIR, `${NAME}.spec.ts`), text).catch(() => {}); }); // AUTO-SAVE (im lang; trang thai hien o cua so code)
   const codePage = await codeCtx.newPage();
   await codePage.setContent(CODE_HTML);
-  renderCode = () => codePage.evaluate((c: string) => {
-    (window as any).__lastCode = c;
-    if ((window as any).__editMode) return;            // CHI dung khi user dang go tay (tranh ghi de o nhap)
-    const p = document.getElementById('code');
-    if (p && (window as any).__hl) p.innerHTML = (window as any).__hl(c);
-  }, currentSpec(actions)).catch(() => {});
+  renderCode = () => {
+    const sl = specLines(actions);
+    const payload = { text: sl.map((l) => l.line).join('\n'), meta: sl.map((l) => ({ act: l.act, fragile: l.fragile })) };
+    return codePage.evaluate((d: { text: string; meta: { act: number | null; fragile: boolean }[] }) => {
+      // __renderSpec tu xu ly: AUTO -> render lai ca khung; EDIT -> CHEN dong action moi (khong ghi de phan dang sua)
+      if ((window as any).__renderSpec) (window as any).__renderSpec(d.text, d.meta);
+      else (window as any).__lastCode = d.text;
+    }, payload).catch(() => {});
+  };
   await renderCode();
 
   // Xep 2 cua so phu KIN man hinh. Do full work-area bang cach MAXIMIZE roi doc lai bounds
@@ -349,15 +394,63 @@ async function main(): Promise<void> {
     await page.waitForTimeout(200);
     await page.evaluate(() => (window as any).__shot && (window as any).__shot()); // chup screenshot
     await page.waitForTimeout(300);
-    // Kiem thu SUA CODE truc tiep tren cua so live code
-    await codePage.click('#btnEdit').catch(() => {});
-    await codePage.fill('#codeEdit', '// MANUAL EDIT\n').catch(() => {});
-    await codePage.click('#btnSave').catch(() => {});
-    await page.waitForTimeout(200);
+    // Auto-save: sua truc tiep -> TU DONG ghi file (khong bam Save)
+    await codePage.fill('#ed', "import { test } from '@playwright/test';\ntest('x', async ({ page }) => {\n  // MANUAL EDIT\n});\n").catch(() => {});
+    await page.waitForTimeout(900); // cho auto-save (debounce 700ms)
     const edited = await fs.readFile(path.join(DIR, `${NAME}.spec.ts`), 'utf8').catch(() => '');
-    console.log('EDIT TEST: spec bat dau bang "' + edited.slice(0, 14).replace(/\n/g, ' ') + '"');
-    await codePage.click('#btnLive').catch(() => {}); // ve live -> reset manualSpec
-    await page.waitForTimeout(200);
+    console.log('AUTO-SAVE: file co "// MANUAL EDIT" =', edited.includes('// MANUAL EDIT'));
+    // Live action khi dang sua: click app -> CHEN dong moi vao editor, KHONG ghi de '// MANUAL EDIT'
+    await page.click('[data-test="add-to-cart-sauce-labs-bolt-t-shirt"]').catch(() => {});
+    await page.waitForTimeout(250);
+    const av = await codePage.evaluate(() => (document.getElementById('ed') as HTMLTextAreaElement).value);
+    console.log(`LIVE-INSERT: co 'bolt-t-shirt'=${av.includes('bolt-t-shirt')} | giu '// MANUAL EDIT'=${av.includes('// MANUAL EDIT')}`);
+    // Undo/redo TU QUAN LY: undo bo action vua chen NHUNG giu sua tay; redo lay lai
+    await page.waitForTimeout(450); // cho commit go tay (neu con)
+    await codePage.click('#bUndo').catch(() => {});
+    await page.waitForTimeout(120);
+    const auv = await codePage.evaluate(() => (document.getElementById('ed') as HTMLTextAreaElement).value);
+    console.log(`UNDO: bo 'bolt-t-shirt'=${!auv.includes('bolt-t-shirt')} | giu '// MANUAL EDIT'=${auv.includes('// MANUAL EDIT')}`);
+    await codePage.click('#bRedo').catch(() => {});
+    await page.waitForTimeout(120);
+    const arv = await codePage.evaluate(() => (document.getElementById('ed') as HTMLTextAreaElement).value);
+    console.log(`REDO: lay lai 'bolt-t-shirt'=${arv.includes('bolt-t-shirt')}`);
+    // Chen TAI CON TRO: dat con tro o dong "// MANUAL EDIT" (trong than) roi ghi -> action chen TAI do (truoc), khong xuong cuoi
+    await codePage.evaluate(() => { const t = document.getElementById('ed') as HTMLTextAreaElement; const i = t.value.indexOf('// MANUAL EDIT'); t.focus(); t.setSelectionRange(i, i); });
+    await page.click('[data-test="add-to-cart-sauce-labs-bike-light"]').catch(() => {});
+    await page.waitForTimeout(250);
+    const cv = await codePage.evaluate(() => (document.getElementById('ed') as HTMLTextAreaElement).value);
+    const iB = cv.indexOf('bike-light'), iM = cv.indexOf('// MANUAL EDIT');
+    console.log(`CURSOR-INSERT: bike-light truoc // MANUAL EDIT = ${iB >= 0 && iB < iM} (tai con tro, khong xuong cuoi)`);
+    // Phim Tab: chen 2 space tai con tro, KHONG nhay focus
+    await codePage.evaluate(() => { const t = document.getElementById('ed') as HTMLTextAreaElement; t.value = 'AB'; t.focus(); t.setSelectionRange(1, 1); });
+    await codePage.press('#ed', 'Tab').catch(() => {});
+    await page.waitForTimeout(100);
+    const tabv = await codePage.evaluate(() => ({ v: (document.getElementById('ed') as HTMLTextAreaElement).value, focused: document.activeElement?.id }));
+    console.log(`TAB TEST: "AB"+Tab@1 -> "${tabv.v}" (ky vong "A  B") | con focus #ed=${tabv.focused === 'ed'}`);
+    // Ctrl+/ comment toggle
+    await codePage.evaluate(() => { const t = document.getElementById('ed') as HTMLTextAreaElement; t.value = 'hello'; t.focus(); t.setSelectionRange(0, 0); });
+    await codePage.press('#ed', 'Control+/').catch(() => {});
+    const cmt = await codePage.evaluate(() => (document.getElementById('ed') as HTMLTextAreaElement).value);
+    await codePage.press('#ed', 'Control+/').catch(() => {});
+    const uncmt = await codePage.evaluate(() => (document.getElementById('ed') as HTMLTextAreaElement).value);
+    console.log(`COMMENT: "hello" -> "${cmt}" -> "${uncmt}" (ky vong "// hello" -> "hello")`);
+    // Comment tren dong RONG (truoc bi loi)
+    await codePage.evaluate(() => { const t = document.getElementById('ed') as HTMLTextAreaElement; t.value = ''; t.focus(); t.setSelectionRange(0, 0); });
+    await codePage.press('#ed', 'Control+/').catch(() => {});
+    const ecmt = await codePage.evaluate(() => (document.getElementById('ed') as HTMLTextAreaElement).value);
+    console.log(`COMMENT EMPTY: "" -> "${ecmt}" (ky vong "// ")`);
+    // Ctrl+D nhan dong
+    await codePage.evaluate(() => { const t = document.getElementById('ed') as HTMLTextAreaElement; t.value = 'X'; t.focus(); t.setSelectionRange(0, 0); });
+    await codePage.press('#ed', 'Control+d').catch(() => {});
+    const dup = await codePage.evaluate(() => (document.getElementById('ed') as HTMLTextAreaElement).value);
+    console.log(`DUP: "X"+Ctrl+D -> "${dup.replace(/\n/g, '\\\\n')}" (ky vong "X\\nX")`);
+    // Back/Forward trinh duyet -> page.goBack()/goForward() (khong phai comment)
+    await page.waitForTimeout(1100); // dam bao dieu huong KHONG bi tinh la do click vua roi
+    await page.goBack().catch(() => {});     // inventory -> saucedemo (login)
+    await page.waitForTimeout(500);
+    await page.goForward().catch(() => {});  // saucedemo -> inventory
+    await page.waitForTimeout(500);
+    console.log(`BACK/FWD: goback=${actions.some((a) => a.type === 'goback')} goforward=${actions.some((a) => a.type === 'goforward')}`);
     // --- Kiem thu: tat Rec -> chuyen trang -> van giu trang thai (khong ghi them) ---
     await page.evaluate(() => (window as any).__recTogglePause && (window as any).__recTogglePause()); // tat Rec
     await page.waitForTimeout(200); // cho state ve Node
@@ -368,9 +461,8 @@ async function main(): Promise<void> {
     console.log(`PAUSE TEST: ${n0} -> ${actions.length} action (Rec off => phai GIU NGUYEN)`);
     const codeLen = await page.evaluate(() => (document.getElementById('__rec_code')?.textContent || '').length);
     console.log(`PANEL CODE: ${codeLen} ky tu (panel trong trang)`);
-    const winLen = await codePage.evaluate(() => (document.getElementById('code')?.textContent || '').length);
-    const hasHl = await codePage.evaluate(() => (document.getElementById('code')?.innerHTML || '').includes('<span'));
-    console.log(`CODE WINDOW: ${winLen} ky tu, highlight=${hasHl}`);
+    const win = await codePage.evaluate(() => { const t = document.getElementById('ed') as HTMLTextAreaElement; t.value = "await page.locator('#x').click();"; t.dispatchEvent(new Event('input', { bubbles: true })); return { len: t.value.length, hl: (document.getElementById('hl')?.innerHTML || '').includes('<span'), ln: (document.getElementById('ln')?.textContent || '').trim().split('\n').length }; });
+    console.log(`CODE WINDOW: ${win.len} ky tu, highlight=${win.hl}, gutter ${win.ln} so dong`);
     const cssA = actions.find((a) => a.type === 'assert' && a.assert === 'css');
     console.log('CSS ASSERT:', cssA ? `toHaveCSS('${cssA.cssProp}','${String(cssA.value || '').slice(0, 20)}')` : '(KHONG co)');
   } else {
@@ -383,7 +475,8 @@ async function main(): Promise<void> {
     });
   }
 
-  await writeOutput(actions);
+  const docText = await codePage.evaluate(() => { const e = document.getElementById('ed') as HTMLTextAreaElement | null; return e ? e.value : null; }).catch(() => null); // noi dung editor (nguon that)
+  await writeOutput(actions, docText);
   try { await browser.close(); } catch (e) { /* trinh duyet da dong */ }
   console.log(`\n✔ ${actions.length} thao tac -> recording/${NAME}/ { ${NAME}.json · ${NAME}.md · ${NAME}.spec.ts }`);
 }
