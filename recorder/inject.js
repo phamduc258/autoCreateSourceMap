@@ -274,6 +274,7 @@
   // ---------- Toolbar day du (giong Playwright codegen) ----------
   // Trang thai: paused (Record on/off), inspect = null|'pick'|'visible'|'text'|'value'
   let paused = false, inspect = null, codeOpen = false, chooseMode = true, moreOpen = false, ui, hl, tip, dragging = null;
+  var recNodes = []; // tat ca node UI -> keepAlive gan lai khi bi SPA xoa
   const isUI = (el) => el && el.closest && (el.closest('#__rec_ui') || el.closest('#__rec_codebox') || el.closest('#__rec_menu') || el.closest('#__rec_picker') || el.closest('#__rec_csspick') || el.closest('#__rec_htmlpick'));
   window.__recRenderCode = (code) => { const p = document.getElementById('__rec_code'); if (p) p.textContent = code; };
   const bestUnique = (el) => { const c = uniqueCandidates(el); const u = c.find((s) => s.n === 1) || c[0]; return u ? u.value : ''; };
@@ -439,7 +440,9 @@
   }
 
   function ensureUI() {
-    if (ui || !document.body) return;
+    if (ui || !document.documentElement) return;
+    try {
+    var __stale = document.getElementById('__rec_ui'); if (__stale && __stale.remove) __stale.remove(); // don ban mount loi truoc
     const IC = 'cursor:pointer;border:0;border-radius:6px;padding:5px 0;min-width:32px;text-align:center;background:#374151;color:#fff;font:16px/1 sans-serif';
     ui = document.createElement('div'); ui.id = '__rec_ui';
     ui.style.cssText = 'position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:2147483647;display:flex;gap:6px;align-items:center;white-space:nowrap;background:#1f2937;color:#fff;padding:6px 8px;border-radius:8px;font:12px/1.4 sans-serif;box-shadow:0 2px 12px rgba(0,0,0,.35)';
@@ -458,7 +461,7 @@
         '<button id="__rec_shot" title="Chup anh man hinh (full page)" style="' + IC + '">📷</button>' +
       '</span>' +
       '<span id="__rec_lbl" style="margin-left:2px;white-space:nowrap;color:#9ca3af;font:11px sans-serif"></span>';
-    document.body.appendChild(ui);
+    document.documentElement.appendChild(ui);
     const on = (id, fn) => document.getElementById(id).addEventListener('click', (e) => { e.stopPropagation(); fn(); });
     on('__rec_rec', togglePause);
     on('__rec_choose', () => setChoose(!chooseMode));
@@ -476,11 +479,11 @@
     hl.style.cssText = 'position:fixed;z-index:2147483646;pointer-events:none;border:2px solid #ef4444;background:rgba(239,68,68,.12);display:none';
     tip = document.createElement('div'); tip.id = '__rec_tip';
     tip.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;background:#111827;color:#a7f3d0;font:12px monospace;padding:3px 6px;border-radius:4px;display:none;max-width:70vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
-    document.body.appendChild(hl); document.body.appendChild(tip);
+    document.documentElement.appendChild(hl); document.documentElement.appendChild(tip);
     const box = document.createElement('div'); box.id = '__rec_codebox';
     box.style.cssText = 'position:fixed;top:48px;right:8px;width:min(560px,46vw);max-height:62vh;overflow:auto;z-index:2147483646;background:#0b1020;border:1px solid #374151;border-radius:8px;display:none;box-shadow:0 4px 16px rgba(0,0,0,.45)';
     box.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:#111827;position:sticky;top:0"><b style="font:12px sans-serif;color:#9ca3af">Generated spec (live)</b><button id="__rec_copy" style="cursor:pointer;border:0;border-radius:5px;padding:2px 9px;background:#374151;color:#fff;font:11px sans-serif">Copy</button></div><pre id="__rec_code" style="margin:0;padding:8px;font:12px/1.5 monospace;white-space:pre;color:#d1fae5"></pre>';
-    document.body.appendChild(box);
+    document.documentElement.appendChild(box);
     document.getElementById('__rec_copy').addEventListener('click', (e) => { e.stopPropagation(); try { navigator.clipboard.writeText(document.getElementById('__rec_code').textContent || ''); } catch (x) {} });
 
     var menu = document.createElement('div'); menu.id = '__rec_menu';
@@ -489,7 +492,7 @@
       '<div class="__rec_mi" data-k="click">Click</div><div class="__rec_mi" data-k="rightclick">Right click</div>' +
       '<div class="__rec_mi" data-k="dblclick">Double click</div><div class="__rec_mi" data-k="hover">Hover</div>' +
       '<div class="__rec_mi" data-k="pick">Pick locator</div>';
-    document.body.appendChild(menu);
+    document.documentElement.appendChild(menu);
     Array.prototype.forEach.call(menu.querySelectorAll('.__rec_mi'), function (mi) {
       mi.style.cssText = 'padding:6px 10px;border-radius:5px;cursor:pointer';
       mi.addEventListener('mouseenter', function () { mi.style.background = '#374151'; });
@@ -501,19 +504,19 @@
     var picker = document.createElement('div'); picker.id = '__rec_picker';
     picker.style.cssText = 'position:fixed;z-index:2147483647;background:#1f2937;color:#fff;border:1px solid #374151;border-radius:8px;display:none;font:12px sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.55);min-width:420px;max-width:72vw;max-height:60vh;overflow:auto';
     picker.innerHTML = '<div id="__rec_picker_hdr" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#111827;color:#9ca3af;position:sticky;top:0;cursor:move"><span><b id="__rec_picker_title">Chon selector</b> (click de dung) · keo de di chuyen</span><span id="__rec_picker_x" style="cursor:pointer;font-size:16px">×</span></div><div id="__rec_picker_body"></div>';
-    document.body.appendChild(picker);
+    document.documentElement.appendChild(picker);
     document.getElementById('__rec_picker_x').addEventListener('click', function (e) { e.stopPropagation(); hidePicker(); });
 
     var csspick = document.createElement('div'); csspick.id = '__rec_csspick';
     csspick.style.cssText = 'position:fixed;z-index:2147483647;background:#1f2937;color:#fff;border:1px solid #374151;border-radius:8px;display:none;font:12px sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.55);min-width:300px;max-width:60vw;max-height:60vh;overflow:auto';
     csspick.innerHTML = '<div id="__rec_csspick_hdr" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#111827;color:#9ca3af;position:sticky;top:0;cursor:move"><span><b>Chon thuoc tinh CSS</b> -> toHaveCSS · keo de di chuyen</span><span id="__rec_csspick_x" style="cursor:pointer;font-size:16px">×</span></div><div id="__rec_csspick_body"></div>';
-    document.body.appendChild(csspick);
+    document.documentElement.appendChild(csspick);
     document.getElementById('__rec_csspick_x').addEventListener('click', function (e) { e.stopPropagation(); hideCssPick(); });
 
     var htmlpick = document.createElement('div'); htmlpick.id = '__rec_htmlpick';
     htmlpick.style.cssText = 'position:fixed;z-index:2147483647;background:#1f2937;color:#fff;border:1px solid #374151;border-radius:8px;display:none;font:12px sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.55);min-width:340px;max-width:72vw;max-height:62vh;overflow:auto';
     htmlpick.innerHTML = '<div id="__rec_htmlpick_hdr" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 10px;background:#111827;color:#9ca3af;position:sticky;top:0;cursor:move"><span><b>HTML cua element</b> · keo de di chuyen</span><span style="display:flex;gap:6px;align-items:center"><button id="__rec_html_mode" title="Chuyen outerHTML / innerHTML" style="cursor:pointer;border:0;border-radius:5px;padding:2px 9px;background:#374151;color:#fff;font:11px sans-serif">outerHTML</button><button id="__rec_html_copy" style="cursor:pointer;border:0;border-radius:5px;padding:2px 9px;background:#374151;color:#fff;font:11px sans-serif">Copy</button><span id="__rec_htmlpick_x" style="cursor:pointer;font-size:16px">×</span></span></div><div id="__rec_htmlpick_body"></div>';
-    document.body.appendChild(htmlpick);
+    document.documentElement.appendChild(htmlpick);
     document.getElementById('__rec_htmlpick_x').addEventListener('click', function (e) { e.stopPropagation(); hideHtmlPick(); });
     document.getElementById('__rec_html_mode').addEventListener('click', function (e) { e.stopPropagation(); htmlMode = htmlMode === 'inner' ? 'outer' : 'inner'; renderHtmlBody(); copyHtml(); });
     document.getElementById('__rec_html_copy').addEventListener('click', function (e) { e.stopPropagation(); copyHtml(); var b = document.getElementById('__rec_html_copy'); if (b) { var o = b.textContent; b.textContent = 'Da copy ✔'; setTimeout(function () { b.textContent = o; }, 900); } });
@@ -523,16 +526,32 @@
     makeDrag(document.getElementById('__rec_htmlpick_hdr'), htmlpick); // keo bang HTML
     render();
     if (window.__recGetState) window.__recGetState().then(applyState).catch(function () {}); // khoi phuc trang thai sau khi chuyen trang
-    // App SPA hay re-render document.body -> toolbar (con cua body) bi xoa. Tu GAN LAI khi mat.
+    // Gan vao <html> (documentElement) -> SPA re-render <body> KHONG xoa duoc. Du phong: van tu gan lai neu mat.
     var reattach = function () {
-      if (document.body && ui && !document.getElementById('__rec_ui')) {
-        [ui, hl, tip, box, menu, picker, csspick, htmlpick].forEach(function (nd) { if (nd) document.body.appendChild(nd); });
+      if (document.documentElement && ui && !document.getElementById('__rec_ui')) {
+        [ui, hl, tip, box, menu, picker, csspick, htmlpick].forEach(function (nd) { if (nd) document.documentElement.appendChild(nd); });
         render();
       }
     };
     try { new MutationObserver(reattach).observe(document.documentElement, { childList: true, subtree: true }); } catch (e) {}
+    recNodes = [ui, hl, tip, box, menu, picker, csspick, htmlpick]; // luu de keepAlive gan lai khi bi xoa
+    } catch (eUI) { ui = null; } // mount loi -> reset de keepAlive thu lai (khong ket cung)
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ensureUI); else ensureUI();
+  // Bootstrap + KEEPALIVE: dung toolbar VA giu no ton tai. App SPA (vd PORTERS) co the xoa/thay ca cay DOM sau render
+  // -> toolbar mat, MutationObserver doi khi "chet" theo documentElement cu (reatt=0). Interval be bi -> luon hoi sinh.
+  function keepAlive() {
+    if (!document.documentElement) return;
+    attachDocListeners();                                          // gan lai listener document -> song sot khi app reset/thay document
+    if (!ui) { ensureUI(); return; }                               // chua dung -> dung
+    if (!document.getElementById('__rec_ui')) {                    // da dung nhung bi xoa -> gan lai vao cay HIEN TAI
+      for (var i = 0; i < recNodes.length; i++) { if (recNodes[i]) { try { document.documentElement.appendChild(recNodes[i]); } catch (e) {} } }
+      render();
+    }
+  }
+  keepAlive();
+  document.addEventListener('DOMContentLoaded', keepAlive);
+  window.addEventListener('load', keepAlive);
+  setInterval(keepAlive, 700); // be bi: app xoa toolbar sau render -> gan lai trong <=700ms (chay vinh vien)
 
   function preview(el) {
     const loc = bestUnique(el);
@@ -543,22 +562,21 @@
     if (inspect === 'html') return '</> lay HTML cua <' + el.tagName.toLowerCase() + '> -> copy';
     return loc;
   }
-  document.addEventListener('mousemove', (e) => {
+  function onMove(e) {
     if (dragging) { var dt = dragging.el; dt.style.left = (e.clientX - dragging.dx) + 'px'; dt.style.top = (e.clientY - dragging.dy) + 'px'; if (dt === ui) dt.style.transform = 'none'; return; }
     if (!inspect || isUI(e.target)) { if (hl) { hl.style.display = 'none'; tip.style.display = 'none'; } return; }
     const el = e.target, r = el.getBoundingClientRect();
     hl.style.display = 'block'; hl.style.left = r.left + 'px'; hl.style.top = r.top + 'px'; hl.style.width = r.width + 'px'; hl.style.height = r.height + 'px';
     tip.textContent = preview(el); tip.style.display = 'block';
     tip.style.left = Math.min(e.clientX + 12, innerWidth - 12 - tip.offsetWidth) + 'px'; tip.style.top = (r.bottom + 4) + 'px';
-  }, true);
-  document.addEventListener('mouseup', () => { if (dragging) { var wasUI = dragging.el === ui; dragging = null; if (wasUI) syncState(); } }, true); // chi luu vi tri toolbar
-
+  }
+  function onUp() { if (dragging) { var wasUI = dragging.el === ui; dragging = null; if (wasUI) syncState(); } } // chi luu vi tri toolbar
   // ---------- Ghi thao tac ----------
-  document.addEventListener('contextmenu', (e) => {       // chuot phai -> menu "Choose action"
+  function onContext(e) {                                 // chuot phai -> menu "Choose action"
     if (paused || isUI(e.target)) return;                 // Rec off / tren UI -> menu trinh duyet binh thuong
     e.preventDefault(); menuTarget = e.target; menuX = e.clientX; menuY = e.clientY; showMenu(e.clientX, e.clientY);
-  }, true);
-  document.addEventListener('click', (e) => {
+  }
+  function onClick(e) {
     var pk = document.getElementById('__rec_picker'), m = document.getElementById('__rec_menu'), cp = document.getElementById('__rec_csspick'), hp = document.getElementById('__rec_htmlpick');
     if (hp && hp.style.display === 'block' && !isUI(e.target)) { e.preventDefault(); e.stopPropagation(); hideHtmlPick(); return; } // click ngoai -> dong htmlpick
     if (cp && cp.style.display === 'block' && !isUI(e.target)) { e.preventDefault(); e.stopPropagation(); hideCssPick(); return; } // click ngoai -> dong csspick
@@ -584,12 +602,12 @@
     }
     if (paused) return;
     send(Object.assign({ type: 'click' }, buildEntry(pick(e.target))));
-  }, true);
-  document.addEventListener('change', (e) => {
+  }
+  function onChange(e) {
     if (isUI(e.target) || inspect || paused) return;
     const el = e.target; send(Object.assign({ type: el.tagName.toLowerCase() === 'select' ? 'select' : 'fill', value: el.value }, buildEntry(el)));
-  }, true);
-  document.addEventListener('keydown', (e) => {
+  }
+  function onKey(e) {
     var hp = document.getElementById('__rec_htmlpick');
     if (hp && hp.style.display === 'block') { if (e.key === 'Escape') { e.preventDefault(); hideHtmlPick(); } return; }
     var cp = document.getElementById('__rec_csspick');
@@ -601,5 +619,11 @@
     if (inspect) { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setInspect(null); } return; }
     if (paused) return;
     if (['Enter', 'Tab', 'Escape'].includes(e.key)) send(Object.assign({ type: 'press', key: e.key }, buildEntry(pick(e.target))));
-  }, true);
+  }
+  // Gan listener cap document. removeEventListener TRUOC -> idempotent + SONG SOT khi app reset/thay document (PORTERS xoa het listener cu).
+  function attachDocListeners() {
+    var d = document, L = [['mousemove', onMove], ['mouseup', onUp], ['contextmenu', onContext], ['click', onClick], ['change', onChange], ['keydown', onKey]];
+    for (var i = 0; i < L.length; i++) { d.removeEventListener(L[i][0], L[i][1], true); d.addEventListener(L[i][0], L[i][1], true); }
+  }
+  attachDocListeners();
 })();

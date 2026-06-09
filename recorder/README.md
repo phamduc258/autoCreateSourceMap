@@ -5,6 +5,10 @@ Playwright **test recorder** — mở trình duyệt thật, ghi lại thao tác
 selector cho AI) và **`.md`**. Có cửa sổ code live (sửa tay, undo/redo, phím tắt), bảng chọn
 selector theo độ tin cậy, công cụ Assert (visible/text/value/CSS) và lấy HTML element.
 
+**Đa tab (popup):** click mở tab mới → tự sinh `const page1Promise = page.waitForEvent('popup')`
++ `const page1 = await page1Promise`, các thao tác ở tab mới dùng `page1.…` (tab thứ 3 → `page2`…).
+Toolbar tự bám trên tab mới kể cả với app SPA "dọn" DOM (không cần F5).
+
 > ℹ️ Scope đã đặt sẵn `@tayphuong7bai` (theo tài khoản npm của bạn). Nếu publish bằng tài
 > khoản npm khác, đổi field `name` trong `package.json` cho khớp.
 

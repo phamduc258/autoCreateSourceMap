@@ -185,6 +185,8 @@ Bảng chia **2 mục tách biệt**:
 
 > 🧭 **Điều hướng:** click link → `// -> URL` (comment, vì click đã điều hướng) · bấm **Back/Forward** trình duyệt → `await page.goBack()` / `page.goForward()` · URL đầu → `page.goto(...)`.
 
+> 🗂️ **Đa tab (popup) — tự động:** click mở **tab mới** → recorder tự sinh `const page1Promise = page.waitForEvent('popup')` + `const page1 = await page1Promise`, mọi thao tác ở tab mới dùng **`page1.…`** (tab gốc là `page`; tab thứ 3 → `page2`…). Toolbar **tự bám trên tab mới** kể cả app SPA "dọn" DOM — không cần F5.
+
 **Output** `recording/<name>/`:
 - `<name>.spec.ts` — code Playwright **chạy được** (giống codegen).
 - `<name>.json` — bản giàu cho **Claude**: mỗi action có `unique` (`best` = selector dùng, `all` = mọi biến thể kèm `n`/`fragile`) + `family` (nhóm item lặp + `within`) → assertion "data trong list": `locator.filter({ hasText }).<within>`. Action `pick` lưu `chosenKind`/`chosenValue`; action `assert` có `assert` = `visible`/`text`/`value`/`css` (css kèm `cssProp`).
