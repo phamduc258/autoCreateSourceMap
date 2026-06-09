@@ -12,6 +12,10 @@ import 'dotenv/config';
 import { chromium, type BrowserContext, type Page } from '@playwright/test';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+// Thu muc chua CHINH file dang chay: record.ts (dev qua tsx) HOAC dist/cli.js (khi cai tu npm).
+// inject.js LUON nam canh file nay -> resolve theo day, KHONG theo process.cwd() (chay duoc tu moi noi / khi la npm package).
+const HERE = path.dirname(fileURLToPath(import.meta.url));
 
 const positional = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const START_URL = positional[0] || process.env.RECORD_URL || process.env.BASE_URL || 'https://www.saucedemo.com';
@@ -287,7 +291,7 @@ async function main(): Promise<void> {
     console.log(`#${actions.length} screenshot -> ${rel}`);
   });
 
-  const inject = await fs.readFile(path.join(process.cwd(), 'recorder', 'inject.js'), 'utf8');
+  const inject = await fs.readFile(path.join(HERE, 'inject.js'), 'utf8');
   await ctx.addInitScript({ content: inject });
 
   // Lich su URL moi tab -> phat hien nut Back/Forward (URL khop muc ke lich su + KHONG do click vua roi gay ra).

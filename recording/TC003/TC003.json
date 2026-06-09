@@ -3,93 +3,13 @@
     "i": 1,
     "type": "navigate",
     "url": "http://127.0.0.1:8000/",
-    "ts": 1780914317527
+    "ts": 1780973571414
   },
   {
+    "i": 2,
+    "type": "screenshot",
+    "file": "shots/shot-1.png",
     "url": "http://127.0.0.1:8000/",
-    "ts": 1780914319177,
-    "type": "click",
-    "tag": "a",
-    "role": "link",
-    "name": "Đăng ký ngay",
-    "unique": {
-      "all": [
-        {
-          "kind": "role",
-          "value": "getByRole('link', { name: 'Đăng ký ngay' })",
-          "fragile": false,
-          "n": 1
-        },
-        {
-          "kind": "text",
-          "value": "getByText('Đăng ký ngay', { exact: true })",
-          "fragile": false,
-          "n": 1
-        },
-        {
-          "kind": "xpath.text",
-          "value": "//a[normalize-space()=\"Đăng ký ngay\"]",
-          "fragile": false,
-          "n": 1
-        },
-        {
-          "kind": "css.class",
-          "value": "a.btn.btn-outline",
-          "fragile": false,
-          "n": 1
-        },
-        {
-          "kind": "cssPath",
-          "value": "body > section:nth-of-type(1) > div > div > a:nth-of-type(2)",
-          "fragile": true,
-          "n": 1
-        },
-        {
-          "kind": "xpathPath",
-          "value": "/html[1]/body[1]/section[1]/div[1]/div[1]/a[2]",
-          "fragile": true,
-          "n": 1
-        },
-        {
-          "kind": "css[href]",
-          "value": "a[href=\"http://127.0.0.1:8000/register\"]",
-          "fragile": false,
-          "n": 2
-        },
-        {
-          "kind": "xpath@class",
-          "value": "//a[contains(concat(\" \",normalize-space(@class),\" \"),\" btn \")]",
-          "fragile": false,
-          "n": 2
-        }
-      ],
-      "best": "getByRole('link', { name: 'Đăng ký ngay' })"
-    },
-    "family": {
-      "count": 2,
-      "all": [
-        {
-          "kind": "css",
-          "value": ".btn",
-          "n": 2
-        }
-      ],
-      "within": ":scope",
-      "best": ".btn"
-    },
-    "fragile": false,
-    "i": 2
-  },
-  {
-    "i": 3,
-    "type": "navigate",
-    "url": "http://127.0.0.1:8000/register",
-    "ts": 1780914319423
-  },
-  {
-    "i": 4,
-    "type": "goback",
-    "url": "http://127.0.0.1:8000/",
-    "ts": 1780914320866
+    "ts": 0
   }
 ]

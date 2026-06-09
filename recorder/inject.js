@@ -274,7 +274,7 @@
   // ---------- Toolbar day du (giong Playwright codegen) ----------
   // Trang thai: paused (Record on/off), inspect = null|'pick'|'visible'|'text'|'value'
   let paused = false, inspect = null, codeOpen = false, chooseMode = true, moreOpen = false, ui, hl, tip, dragging = null;
-  const isUI = (el) => el && el.closest && (el.closest('#__rec_ui') || el.closest('#__rec_codebox') || el.closest('#__rec_menu') || el.closest('#__rec_picker') || el.closest('#__rec_csspick'));
+  const isUI = (el) => el && el.closest && (el.closest('#__rec_ui') || el.closest('#__rec_codebox') || el.closest('#__rec_menu') || el.closest('#__rec_picker') || el.closest('#__rec_csspick') || el.closest('#__rec_htmlpick'));
   window.__recRenderCode = (code) => { const p = document.getElementById('__rec_code'); if (p) p.textContent = code; };
   const bestUnique = (el) => { const c = uniqueCandidates(el); const u = c.find((s) => s.n === 1) || c[0]; return u ? u.value : ''; };
   // textContent (KHONG ap CSS text-transform) de KHOP voi toContainText cua Playwright (innerText bi in HOA do CSS -> lech).
@@ -286,14 +286,14 @@
     set('__rec_rec', !paused, '#16a34a');
     set('__rec_choose', chooseMode, '#16a34a');
     set('__rec_more', moreOpen, '#4b5563');
-    set('__rec_pick', inspect === 'pick'); set('__rec_av', inspect === 'visible'); set('__rec_at', inspect === 'text'); set('__rec_aval', inspect === 'value'); set('__rec_acss', inspect === 'css');
+    set('__rec_pick', inspect === 'pick'); set('__rec_av', inspect === 'visible'); set('__rec_at', inspect === 'text'); set('__rec_aval', inspect === 'value'); set('__rec_acss', inspect === 'css'); set('__rec_ahtml', inspect === 'html');
     const l = document.getElementById('__rec_lbl');
     if (l) l.textContent = inspect ? (inspect + ': click element · Esc') : (paused ? 'tam dung' : ''); // gon: dang ghi -> de trong (nut ● mau xanh da bao)
     document.documentElement.style.cursor = inspect ? 'crosshair' : '';
     if (!inspect && hl) { hl.style.display = 'none'; tip.style.display = 'none'; }
   }
   function setInspect(k) { inspect = k; render(); }
-  var menuTarget = null, menuX = 0, menuY = 0, pickerTarget = null, pickerAction = 'pick', pendingExtra = null, cssPickTarget = null;
+  var menuTarget = null, menuX = 0, menuY = 0, pickerTarget = null, pickerAction = 'pick', pendingExtra = null, cssPickTarget = null, htmlPickTarget = null, htmlMode = 'outer';
   function showMenu(x, y) { var m = document.getElementById('__rec_menu'); if (!m) return; m.style.display = 'block'; m.style.left = Math.min(x, innerWidth - m.offsetWidth - 8) + 'px'; m.style.top = Math.min(y, innerHeight - m.offsetHeight - 8) + 'px'; }
   function hideMenu() { var m = document.getElementById('__rec_menu'); if (m) m.style.display = 'none'; menuTarget = null; }
   function chooseAction(kind) { var t = menuTarget, mx = menuX, my = menuY; hideMenu(); if (!t) return; if (chooseMode) { pickerAction = kind; pendingExtra = null; showPicker(t, mx, my); } else send(Object.assign({ type: kind }, buildEntry(t))); } // ON: bang chon · OFF: tu dong best
@@ -381,6 +381,26 @@
     });
   }
   function hideCssPick() { var p = document.getElementById('__rec_csspick'); if (p) p.style.display = 'none'; cssPickTarget = null; }
+  // === LAY HTML: hien outerHTML/innerHTML cua element + auto-copy clipboard (cong cu INSPECT, KHONG sinh test step) ===
+  function htmlText() { var t = htmlPickTarget; if (!t) return ''; return htmlMode === 'inner' ? (t.innerHTML || '') : (t.outerHTML || ''); }
+  function copyHtml() { try { navigator.clipboard && navigator.clipboard.writeText(htmlText()); } catch (x) {} }
+  function renderHtmlBody() {
+    var p = document.getElementById('__rec_htmlpick'); if (!p) return;
+    var raw = htmlText(), esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+    var mb = document.getElementById('__rec_html_mode'); if (mb) mb.textContent = htmlMode === 'inner' ? 'innerHTML' : 'outerHTML';
+    p.querySelector('#__rec_htmlpick_body').innerHTML =
+      '<div style="padding:4px 10px;color:#9ca3af;font:11px sans-serif;background:#0b1220;border-bottom:1px solid #374151">' + (htmlMode === 'inner' ? 'innerHTML' : 'outerHTML') + ' · ' + raw.length + ' ky tu · da copy clipboard</div>' +
+      '<pre style="margin:0;padding:8px;font:12px/1.5 monospace;white-space:pre-wrap;word-break:break-all;color:#d1fae5">' + (esc(raw) || '(rong)') + '</pre>';
+  }
+  function showHtmlPick(el, x, y) {
+    var p = document.getElementById('__rec_htmlpick'); if (!p) return;
+    htmlPickTarget = el; htmlMode = 'outer';
+    renderHtmlBody(); copyHtml();
+    p.style.display = 'block';
+    p.style.left = Math.min(x || 80, innerWidth - p.offsetWidth - 8) + 'px';
+    p.style.top = Math.min(y || 80, innerHeight - p.offsetHeight - 8) + 'px';
+  }
+  function hideHtmlPick() { var p = document.getElementById('__rec_htmlpick'); if (p) p.style.display = 'none'; htmlPickTarget = null; }
   function syncState() { try { window.__recSetState && window.__recSetState({ paused: paused, codeOpen: codeOpen, chooseMode: chooseMode, more: moreOpen, pos: ui ? { left: ui.style.left, top: ui.style.top } : null }); } catch (e) {} }
   function showCode(v) { codeOpen = v; const b = document.getElementById('__rec_codebox'); if (b) b.style.display = v ? 'block' : 'none'; }
   function showExtra(v) { // nhom tool phu (assert/shot)
@@ -411,6 +431,7 @@
     if (!handle) return;
     handle.addEventListener('mousedown', function (e) {
       if (e.target && e.target.id && /_x$/.test(e.target.id)) return; // bo qua nut × (dong) -> khong keo
+      if (e.target && e.target.tagName === 'BUTTON') return;          // bo qua nut trong header (mode/copy) -> khong keo
       e.preventDefault();
       var r = target.getBoundingClientRect();
       dragging = { el: target, dx: e.clientX - r.left, dy: e.clientY - r.top };
@@ -433,6 +454,7 @@
         '<button id="__rec_at"   title="Assert text — kiem tra noi dung text (toContainText)" style="' + IC + '">🔤</button>' +
         '<button id="__rec_aval" title="Assert value — kiem tra gia tri input (toHaveValue)" style="' + IC + '">=</button>' +
         '<button id="__rec_acss" title="Assert CSS — kiem tra thuoc tinh CSS nhu text-transform (toHaveCSS)" style="' + IC + '">🎨</button>' +
+        '<button id="__rec_ahtml" title="Lay HTML cua element (outerHTML/innerHTML) -> copy clipboard" style="' + IC + '">&lt;/&gt;</button>' +
         '<button id="__rec_shot" title="Chup anh man hinh (full page)" style="' + IC + '">📷</button>' +
       '</span>' +
       '<span id="__rec_lbl" style="margin-left:2px;white-space:nowrap;color:#9ca3af;font:11px sans-serif"></span>';
@@ -445,6 +467,7 @@
     on('__rec_at', () => setInspect(inspect === 'text' ? null : 'text'));
     on('__rec_aval', () => setInspect(inspect === 'value' ? null : 'value'));
     on('__rec_acss', () => setInspect(inspect === 'css' ? null : 'css')); // assert CSS
+    on('__rec_ahtml', () => setInspect(inspect === 'html' ? null : 'html')); // lay HTML element
     on('__rec_shot', () => { if (window.__shot) window.__shot(); }); // chup screenshot (Node xu ly)
     on('__rec_more', () => { showExtra(!moreOpen); syncState(); }); // mo/dong nhom tool phu
     makeDrag(document.getElementById('__rec_drag'), ui);
@@ -486,14 +509,24 @@
     csspick.innerHTML = '<div id="__rec_csspick_hdr" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#111827;color:#9ca3af;position:sticky;top:0;cursor:move"><span><b>Chon thuoc tinh CSS</b> -> toHaveCSS · keo de di chuyen</span><span id="__rec_csspick_x" style="cursor:pointer;font-size:16px">×</span></div><div id="__rec_csspick_body"></div>';
     document.body.appendChild(csspick);
     document.getElementById('__rec_csspick_x').addEventListener('click', function (e) { e.stopPropagation(); hideCssPick(); });
+
+    var htmlpick = document.createElement('div'); htmlpick.id = '__rec_htmlpick';
+    htmlpick.style.cssText = 'position:fixed;z-index:2147483647;background:#1f2937;color:#fff;border:1px solid #374151;border-radius:8px;display:none;font:12px sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.55);min-width:340px;max-width:72vw;max-height:62vh;overflow:auto';
+    htmlpick.innerHTML = '<div id="__rec_htmlpick_hdr" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 10px;background:#111827;color:#9ca3af;position:sticky;top:0;cursor:move"><span><b>HTML cua element</b> · keo de di chuyen</span><span style="display:flex;gap:6px;align-items:center"><button id="__rec_html_mode" title="Chuyen outerHTML / innerHTML" style="cursor:pointer;border:0;border-radius:5px;padding:2px 9px;background:#374151;color:#fff;font:11px sans-serif">outerHTML</button><button id="__rec_html_copy" style="cursor:pointer;border:0;border-radius:5px;padding:2px 9px;background:#374151;color:#fff;font:11px sans-serif">Copy</button><span id="__rec_htmlpick_x" style="cursor:pointer;font-size:16px">×</span></span></div><div id="__rec_htmlpick_body"></div>';
+    document.body.appendChild(htmlpick);
+    document.getElementById('__rec_htmlpick_x').addEventListener('click', function (e) { e.stopPropagation(); hideHtmlPick(); });
+    document.getElementById('__rec_html_mode').addEventListener('click', function (e) { e.stopPropagation(); htmlMode = htmlMode === 'inner' ? 'outer' : 'inner'; renderHtmlBody(); copyHtml(); });
+    document.getElementById('__rec_html_copy').addEventListener('click', function (e) { e.stopPropagation(); copyHtml(); var b = document.getElementById('__rec_html_copy'); if (b) { var o = b.textContent; b.textContent = 'Da copy ✔'; setTimeout(function () { b.textContent = o; }, 900); } });
+
     makeDrag(document.getElementById('__rec_picker_hdr'), picker);   // keo bang chon selector
     makeDrag(document.getElementById('__rec_csspick_hdr'), csspick); // keo bang chon CSS
+    makeDrag(document.getElementById('__rec_htmlpick_hdr'), htmlpick); // keo bang HTML
     render();
     if (window.__recGetState) window.__recGetState().then(applyState).catch(function () {}); // khoi phuc trang thai sau khi chuyen trang
     // App SPA hay re-render document.body -> toolbar (con cua body) bi xoa. Tu GAN LAI khi mat.
     var reattach = function () {
       if (document.body && ui && !document.getElementById('__rec_ui')) {
-        [ui, hl, tip, box, menu, picker, csspick].forEach(function (nd) { if (nd) document.body.appendChild(nd); });
+        [ui, hl, tip, box, menu, picker, csspick, htmlpick].forEach(function (nd) { if (nd) document.body.appendChild(nd); });
         render();
       }
     };
@@ -507,6 +540,7 @@
     if (inspect === 'text') return "toContainText('" + visibleText(el).slice(0, 40) + "')";
     if (inspect === 'value') return "toHaveValue('" + (el.value != null ? String(el.value).slice(0, 40) : '') + "')";
     if (inspect === 'css') return 'toHaveCSS(...) <- ' + loc;
+    if (inspect === 'html') return '</> lay HTML cua <' + el.tagName.toLowerCase() + '> -> copy';
     return loc;
   }
   document.addEventListener('mousemove', (e) => {
@@ -525,7 +559,8 @@
     e.preventDefault(); menuTarget = e.target; menuX = e.clientX; menuY = e.clientY; showMenu(e.clientX, e.clientY);
   }, true);
   document.addEventListener('click', (e) => {
-    var pk = document.getElementById('__rec_picker'), m = document.getElementById('__rec_menu'), cp = document.getElementById('__rec_csspick');
+    var pk = document.getElementById('__rec_picker'), m = document.getElementById('__rec_menu'), cp = document.getElementById('__rec_csspick'), hp = document.getElementById('__rec_htmlpick');
+    if (hp && hp.style.display === 'block' && !isUI(e.target)) { e.preventDefault(); e.stopPropagation(); hideHtmlPick(); return; } // click ngoai -> dong htmlpick
     if (cp && cp.style.display === 'block' && !isUI(e.target)) { e.preventDefault(); e.stopPropagation(); hideCssPick(); return; } // click ngoai -> dong csspick
     if (pk && pk.style.display === 'block' && !isUI(e.target)) { e.preventDefault(); e.stopPropagation(); hidePicker(); return; } // click ngoai -> dong picker
     if (m && m.style.display === 'block' && !isUI(e.target)) { e.preventDefault(); e.stopPropagation(); hideMenu(); return; }     // click ngoai -> dong menu
@@ -539,6 +574,8 @@
         else send(Object.assign({ type: 'pick' }, buildEntry(iel)));            // OFF: tu dong lay best
       } else if (mode === 'css') {
         showCssPick(iel, e.clientX, e.clientY);                                  // chon thuoc tinh CSS -> toHaveCSS
+      } else if (mode === 'html') {
+        showHtmlPick(iel, e.clientX, e.clientY);                                 // lay outerHTML/innerHTML -> copy
       } else {
         if (chooseMode) { pickerAction = 'assert'; pendingExtra = { assert: mode }; if (mode === 'text') pendingExtra.text = visibleText(iel); if (mode === 'value') pendingExtra.value = iel.value != null ? iel.value : ''; showPicker(iel, e.clientX, e.clientY); }
         else { var aa = { type: 'assert', assert: mode }; if (mode === 'text') aa.text = visibleText(iel); if (mode === 'value') aa.value = iel.value != null ? iel.value : ''; send(Object.assign(aa, buildEntry(iel))); }
@@ -553,6 +590,8 @@
     const el = e.target; send(Object.assign({ type: el.tagName.toLowerCase() === 'select' ? 'select' : 'fill', value: el.value }, buildEntry(el)));
   }, true);
   document.addEventListener('keydown', (e) => {
+    var hp = document.getElementById('__rec_htmlpick');
+    if (hp && hp.style.display === 'block') { if (e.key === 'Escape') { e.preventDefault(); hideHtmlPick(); } return; }
     var cp = document.getElementById('__rec_csspick');
     if (cp && cp.style.display === 'block') { if (e.key === 'Escape') { e.preventDefault(); hideCssPick(); } return; }
     var pk = document.getElementById('__rec_picker');

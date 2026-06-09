@@ -1,0 +1,33 @@
+{
+  "name": "@tayphuong7bai/pw-recorder",
+  "version": "1.0.1",
+  "description": "Playwright test recorder — ghi thao tac + sinh selector/spec/JSON cho AI",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "pw-recorder": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "start": "tsx record.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.49.0",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.28.0",
+    "tsx": "^4.19.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
