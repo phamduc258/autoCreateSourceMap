@@ -3,12 +3,12 @@
     "i": 1,
     "type": "navigate",
     "url": "https://www.saucedemo.com/",
-    "ts": 1780995768359,
+    "ts": 1781493339572,
     "pageIdx": 0
   },
   {
     "url": "https://www.saucedemo.com/",
-    "ts": 1780995769216,
+    "ts": 1781493340116,
     "type": "fill",
     "value": "standard_user",
     "tag": "input",
@@ -97,7 +97,7 @@
   },
   {
     "url": "https://www.saucedemo.com/",
-    "ts": 1780995769248,
+    "ts": 1781493340145,
     "type": "fill",
     "value": "secret_sauce",
     "tag": "input",
@@ -180,7 +180,7 @@
   },
   {
     "url": "https://www.saucedemo.com/",
-    "ts": 1780995769249,
+    "ts": 1781493340145,
     "type": "click",
     "tag": "input",
     "role": "button",
@@ -247,12 +247,12 @@
     "i": 5,
     "type": "navigate",
     "url": "https://www.saucedemo.com/inventory.html",
-    "ts": 1780995769254,
+    "ts": 1781493340152,
     "pageIdx": 0
   },
   {
     "url": "https://www.saucedemo.com/inventory.html",
-    "ts": 1780995769386,
+    "ts": 1781493340282,
     "type": "click",
     "tag": "button",
     "role": "button",
@@ -351,7 +351,7 @@
   },
   {
     "url": "https://www.saucedemo.com/inventory.html",
-    "ts": 1780995769447,
+    "ts": 1781493340342,
     "type": "pick",
     "chosenKind": "testId",
     "chosenValue": "[data-test=\"add-to-cart-sauce-labs-bike-light\"]",
@@ -452,7 +452,7 @@
   },
   {
     "url": "https://www.saucedemo.com/inventory.html",
-    "ts": 1780995769505,
+    "ts": 1781493340402,
     "type": "assert",
     "chosenKind": "xpath.text",
     "chosenValue": "//div[normalize-space()=\"Sauce Labs Backpack\"]",
@@ -530,7 +530,7 @@
   },
   {
     "url": "https://www.saucedemo.com/inventory.html",
-    "ts": 1780995769865,
+    "ts": 1781493340772,
     "type": "dblclick",
     "chosenKind": "testId",
     "chosenValue": "[data-test=\"add-to-cart-sauce-labs-onesie\"]",
@@ -631,7 +631,7 @@
   },
   {
     "url": "https://www.saucedemo.com/inventory.html",
-    "ts": 1780995770105,
+    "ts": 1781493341011,
     "type": "click",
     "tag": "button",
     "role": "button",
@@ -731,7 +731,7 @@
   },
   {
     "url": "https://www.saucedemo.com/inventory.html",
-    "ts": 1780995770366,
+    "ts": 1781493341272,
     "type": "assert",
     "assert": "css",
     "cssProp": "text-transform",
@@ -811,19 +811,19 @@
     "i": 12,
     "type": "navigate",
     "url": "https://www.saucedemo.com/?/inventory.html",
-    "ts": 1780995770673,
+    "ts": 1781493342034,
     "pageIdx": 1
   },
   {
     "i": 13,
     "type": "navigate",
     "url": "https://www.saucedemo.com/inventory.html",
-    "ts": 1780995770680,
+    "ts": 1781493342039,
     "pageIdx": 1
   },
   {
     "url": "https://www.saucedemo.com/inventory.html",
-    "ts": 1780995770756,
+    "ts": 1781493342113,
     "type": "click",
     "tag": "button",
     "role": "button",
@@ -876,12 +876,12 @@
       "best": "#react-burger-menu-btn"
     },
     "family": {
-      "count": 92,
+      "count": 94,
       "all": [
         {
           "kind": "tag",
           "value": "div",
-          "n": 92
+          "n": 94
         }
       ],
       "within": "getByRole('button', { name: 'Open Menu' })",
@@ -901,7 +901,7 @@
   },
   {
     "url": "https://www.saucedemo.com/inventory.html",
-    "ts": 1780995772518,
+    "ts": 1781493343882,
     "type": "click",
     "tag": "button",
     "role": "button",
@@ -1000,7 +1000,7 @@
   },
   {
     "url": "https://www.saucedemo.com/inventory.html",
-    "ts": 1780995774527,
+    "ts": 1781493345902,
     "type": "click",
     "tag": "button",
     "role": "button",
@@ -1101,14 +1101,14 @@
     "i": 18,
     "type": "goback",
     "url": "https://www.saucedemo.com/",
-    "ts": 1780995776057,
+    "ts": 1781493347433,
     "pageIdx": 0
   },
   {
     "i": 19,
     "type": "goforward",
     "url": "https://www.saucedemo.com/inventory.html",
-    "ts": 1780995776578,
+    "ts": 1781493347945,
     "pageIdx": 0
   }
 ]

@@ -144,8 +144,8 @@ n = so element khop. unique nen n=1. family = nhom item lap (n>=2) -> .filter({h
        . cssPath: `#react-burger-menu-btn` (n=1)
        . xpathPath: `//*[@id="react-burger-menu-btn"]` (n=1)
        . text: `getByText('Open Menu', { exact: true })` (n=3)
-   - family: `div` x92  -> within: `getByRole('button', { name: 'Open Menu' })`
-       . tag: `div` (n=92)
+   - family: `div` x94  -> within: `getByRole('button', { name: 'Open Menu' })`
+       . tag: `div` (n=94)
 15. **screenshot** -> `shots/shot-1.png`
 16. **click** — "Add to cart" (button)
    - unique: `[data-test="add-to-cart-sauce-labs-bolt-t-shirt"]`
