@@ -1,6 +1,6 @@
 {
   "name": "@tayphuong7bai/pw-recorder",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Playwright test recorder — ghi thao tac + sinh selector/spec/JSON cho AI",
   "license": "MIT",
   "type": "module",

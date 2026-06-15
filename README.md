@@ -146,11 +146,12 @@ RECORD_CHANNEL=chrome npm run record -- <url> --name=TC004                    # 
 
 **Toolbar (đầu trang khi headed) — chỉ ICON, hover ra tooltip giải thích:**
 - **Chính (luôn hiện):** ☰ kéo · **●** Rec · **📋** List SL · **🎯** Pick · **⋯** More.
-- **Bấm ⋯ → nhóm tool phụ:** **👁** Visible · **🔤** Text · **=** Value · **🎨** CSS · **📷** Shot. (Mở ⋯ nở **sang phải**, không làm toolbar nhảy; trạng thái mở giữ qua chuyển trang.)
+- **Bấm ⋯ → nhóm tool phụ:** **👁** Visible · **🔤** Text · **=** Value · **🎨** CSS · `</>` HTML · **📷** Shot. (Mở ⋯ nở **sang phải**, không làm toolbar nhảy; trạng thái mở giữ qua chuyển trang.)
 - Đã **bỏ nút `</> Code`** vì có **cửa sổ live code** riêng (xem dưới).
 - **📋 List SL** (toggle, mặc định ON): ON = thao tác nhắm element (Pick/Assert/menu chuột phải) **mở bảng chọn selector**; OFF = **tự động lấy `best`** (== ⭐ đề xuất).
 - **🎨 CSS:** click element → bảng **thuộc tính CSS computed** (text-transform/color/font-size…) → chọn 1 → sinh `expect(...).toHaveCSS('prop','value')` (test kiểu hiển thị, vd chữ in HOA do `text-transform`).
 - **📷 Shot:** chụp full-page → `recording/<name>/shots/shot-N.png` (tự ẩn UI khi chụp) + log step `screenshot` (spec sinh `page.screenshot(...)`).
+- **`</>` HTML:** click element → panel: chọn **outerHTML/innerHTML**, **Copy**, hoặc đặt tên file rồi **💾 Lưu** → HTML (**format đẹp** 2-space) vào `recording/<name>/html/<tên>.html`. Tên file gợi ý theo **id → class** (bỏ class tự sinh, sửa được). Công cụ inspect — không sinh test step.
 - Assert/Pick: click element → (List SL ON) bảng chọn / (OFF) auto best. Esc hủy. Rec + List SL + vị trí toolbar + cửa sổ code **giữ qua chuyển trang**.
 - Toolbar bền trên **tab/popup mới** (link `target=_blank`): recorder **re-inject khi `domcontentloaded`** (phòng `addInitScript` bị miss → khỏi phải F5), có guard chống nhân đôi; và **tự gắn lại** nếu app SPA re-render `<body>` làm mất nó (MutationObserver).
 

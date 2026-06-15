@@ -383,7 +383,29 @@
   }
   function hideCssPick() { var p = document.getElementById('__rec_csspick'); if (p) p.style.display = 'none'; cssPickTarget = null; }
   // === LAY HTML: hien outerHTML/innerHTML cua element + auto-copy clipboard (cong cu INSPECT, KHONG sinh test step) ===
-  function htmlText() { var t = htmlPickTarget; if (!t) return ''; return htmlMode === 'inner' ? (t.innerHTML || '') : (t.outerHTML || ''); }
+  // Format HTML cho dep: re-indent doc lap (2 space), <tag>text</tag> gon 1 dong. Input la DOM-serialized (luon hop le).
+  function prettyHtml(html) {
+    var VOID = { area: 1, base: 1, br: 1, col: 1, embed: 1, hr: 1, img: 1, input: 1, link: 1, meta: 1, param: 1, source: 1, track: 1, wbr: 1 };
+    var toks = String(html == null ? '' : html).replace(/\r\n/g, '\n').match(/<!--[\s\S]*?-->|<\/?[a-zA-Z!][^>]*>|[^<]+/g) || [];
+    var items = [];
+    for (var k = 0; k < toks.length; k++) { var r = toks[k]; if (r.charAt(0) === '<') items.push(r.replace(/\s+/g, ' ').trim()); else { var tx = r.replace(/\s+/g, ' ').trim(); if (tx) items.push(tx); } }
+    var out = '', depth = 0;
+    function pad(d) { var s = ''; for (var j = 0; j < d; j++) s += '  '; return s; }
+    for (var i = 0; i < items.length; i++) {
+      var t = items[i];
+      if (t.charAt(0) !== '<') { out += pad(depth) + t + '\n'; continue; }
+      if (t.indexOf('<!--') === 0) { out += pad(depth) + t + '\n'; continue; }
+      if (t.indexOf('</') === 0) { depth = depth > 0 ? depth - 1 : 0; out += pad(depth) + t + '\n'; continue; }
+      var m = t.match(/^<\s*([a-zA-Z0-9-]+)/), tag = m ? m[1].toLowerCase() : '';
+      if (/\/>\s*$/.test(t) || VOID[tag]) { out += pad(depth) + t + '\n'; continue; }
+      var nx = items[i + 1], af = items[i + 2];
+      if (nx && af && nx.charAt(0) !== '<' && af.toLowerCase() === '</' + tag + '>') { out += pad(depth) + t + nx + af + '\n'; i += 2; continue; } // <tag>text</tag> 1 dong
+      out += pad(depth) + t + '\n'; depth++;
+    }
+    return out.replace(/\n+$/, '');
+  }
+  function htmlRaw() { var t = htmlPickTarget; if (!t) return ''; return htmlMode === 'inner' ? (t.innerHTML || '') : (t.outerHTML || ''); }
+  function htmlText() { try { return prettyHtml(htmlRaw()) || htmlRaw(); } catch (e) { return htmlRaw(); } } // dep (preview/copy/luu); loi -> raw
   function copyHtml() { try { navigator.clipboard && navigator.clipboard.writeText(htmlText()); } catch (x) {} }
   function renderHtmlBody() {
     var p = document.getElementById('__rec_htmlpick'); if (!p) return;
@@ -393,9 +415,22 @@
       '<div style="padding:4px 10px;color:#9ca3af;font:11px sans-serif;background:#0b1220;border-bottom:1px solid #374151">' + (htmlMode === 'inner' ? 'innerHTML' : 'outerHTML') + ' · ' + raw.length + ' ky tu · da copy clipboard</div>' +
       '<pre style="margin:0;padding:8px;font:12px/1.5 monospace;white-space:pre-wrap;word-break:break-all;color:#d1fae5">' + (esc(raw) || '(rong)') + '</pre>';
   }
+  function htmlDefaultName(el) { // goi y ten file: UU TIEN id -> class (bo qua class tu sinh) -> tag
+    var n = '';
+    if (el && el.id) n = el.id;
+    else if (el) {
+      var cls = ((el.getAttribute && el.getAttribute('class')) || '').trim().split(/\s+/).filter(Boolean);
+      var good = cls.filter(function (c) { return !looksGenerated(c); });
+      n = good[0] || cls[0] || (el.tagName ? el.tagName.toLowerCase() : '');
+    }
+    n = n || 'element';
+    return String(n).replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40) || 'element';
+  }
   function showHtmlPick(el, x, y) {
     var p = document.getElementById('__rec_htmlpick'); if (!p) return;
     htmlPickTarget = el; htmlMode = 'outer';
+    var inp = document.getElementById('__rec_html_name'); if (inp) inp.value = htmlDefaultName(el);
+    var note = document.getElementById('__rec_html_note'); if (note) { note.style.color = '#34d399'; note.textContent = ''; }
     renderHtmlBody(); copyHtml();
     p.style.display = 'block';
     p.style.left = Math.min(x || 80, innerWidth - p.offsetWidth - 8) + 'px';
@@ -515,11 +550,25 @@
 
     var htmlpick = document.createElement('div'); htmlpick.id = '__rec_htmlpick';
     htmlpick.style.cssText = 'position:fixed;z-index:2147483647;background:#1f2937;color:#fff;border:1px solid #374151;border-radius:8px;display:none;font:12px sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.55);min-width:340px;max-width:72vw;max-height:62vh;overflow:auto';
-    htmlpick.innerHTML = '<div id="__rec_htmlpick_hdr" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 10px;background:#111827;color:#9ca3af;position:sticky;top:0;cursor:move"><span><b>HTML cua element</b> · keo de di chuyen</span><span style="display:flex;gap:6px;align-items:center"><button id="__rec_html_mode" title="Chuyen outerHTML / innerHTML" style="cursor:pointer;border:0;border-radius:5px;padding:2px 9px;background:#374151;color:#fff;font:11px sans-serif">outerHTML</button><button id="__rec_html_copy" style="cursor:pointer;border:0;border-radius:5px;padding:2px 9px;background:#374151;color:#fff;font:11px sans-serif">Copy</button><span id="__rec_htmlpick_x" style="cursor:pointer;font-size:16px">×</span></span></div><div id="__rec_htmlpick_body"></div>';
+    htmlpick.innerHTML = '<div id="__rec_htmlpick_hdr" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 10px;background:#111827;color:#9ca3af;position:sticky;top:0;cursor:move"><span><b>HTML cua element</b> · keo de di chuyen</span><span style="display:flex;gap:6px;align-items:center"><button id="__rec_html_mode" title="Chuyen outerHTML / innerHTML" style="cursor:pointer;border:0;border-radius:5px;padding:2px 9px;background:#374151;color:#fff;font:11px sans-serif">outerHTML</button><button id="__rec_html_copy" style="cursor:pointer;border:0;border-radius:5px;padding:2px 9px;background:#374151;color:#fff;font:11px sans-serif">Copy</button><span id="__rec_htmlpick_x" style="cursor:pointer;font-size:16px">×</span></span></div>' +
+      '<div style="display:flex;gap:6px;align-items:center;padding:6px 10px;background:#0b1220;border-bottom:1px solid #374151"><input id="__rec_html_name" placeholder="ten file" spellcheck="false" style="flex:1;min-width:80px;background:#111827;color:#e5e7eb;border:1px solid #374151;border-radius:5px;padding:4px 8px;font:12px monospace;outline:none"><span style="color:#9ca3af;font:11px monospace">.html</span><button id="__rec_html_save" title="Luu HTML vao file recording/&lt;test-case&gt;/html/&lt;ten&gt;.html" style="cursor:pointer;border:0;border-radius:5px;padding:4px 12px;background:#16a34a;color:#fff;font:11px sans-serif;white-space:nowrap">💾 Luu</button></div>' +
+      '<div id="__rec_html_note" style="padding:3px 10px;color:#34d399;font:11px monospace;min-height:14px;word-break:break-all"></div>' +
+      '<div id="__rec_htmlpick_body"></div>';
     document.documentElement.appendChild(htmlpick);
     document.getElementById('__rec_htmlpick_x').addEventListener('click', function (e) { e.stopPropagation(); hideHtmlPick(); });
     document.getElementById('__rec_html_mode').addEventListener('click', function (e) { e.stopPropagation(); htmlMode = htmlMode === 'inner' ? 'outer' : 'inner'; renderHtmlBody(); copyHtml(); });
     document.getElementById('__rec_html_copy').addEventListener('click', function (e) { e.stopPropagation(); copyHtml(); var b = document.getElementById('__rec_html_copy'); if (b) { var o = b.textContent; b.textContent = 'Da copy ✔'; setTimeout(function () { b.textContent = o; }, 900); } });
+    function doSaveHtml() { // gui {name, html} sang Node -> ghi file html/<test-case>/<ten>.html
+      var inp = document.getElementById('__rec_html_name'), note = document.getElementById('__rec_html_note'), btn = document.getElementById('__rec_html_save');
+      var name = (inp && inp.value || '').trim() || 'element';
+      if (!window.__saveHtml) { if (note) { note.style.color = '#f87171'; note.textContent = 'Khong luu duoc (binding __saveHtml thieu)'; } return; }
+      window.__saveHtml({ name: name, html: htmlText() }).then(function (saved) {
+        if (note) { note.style.color = '#34d399'; note.textContent = '✔ Da luu: ' + saved; }
+        if (btn) { var o = btn.textContent; btn.textContent = '✔ Da luu'; setTimeout(function () { btn.textContent = o; }, 1500); }
+      }).catch(function (err) { if (note) { note.style.color = '#f87171'; note.textContent = 'Loi luu: ' + (err && err.message || err); } });
+    }
+    document.getElementById('__rec_html_save').addEventListener('click', function (e) { e.stopPropagation(); doSaveHtml(); });
+    document.getElementById('__rec_html_name').addEventListener('keydown', function (e) { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); doSaveHtml(); } }); // Enter = luu nhanh
 
     makeDrag(document.getElementById('__rec_picker_hdr'), picker);   // keo bang chon selector
     makeDrag(document.getElementById('__rec_csspick_hdr'), csspick); // keo bang chon CSS

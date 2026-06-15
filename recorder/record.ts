@@ -309,6 +309,17 @@ async function main(): Promise<void> {
     console.log(`#${actions.length} screenshot -> ${rel}`);
   });
 
+  // Luu HTML cua element vao file: recording/<NAME>/html/<ten>.html (trong thu muc test case). Goi tu tool </> trong trang.
+  await ctx.exposeBinding('__saveHtml', async (_s: any, data: { name?: string; html?: string }) => {
+    const safe = String(data?.name || 'element').trim().replace(/\.html?$/i, '').replace(/[\\/:*?"<>|\s]+/g, '_').replace(/^_+|_+$/g, '') || 'element';
+    await fs.mkdir(path.join(DIR, 'html'), { recursive: true });
+    const file = path.join(DIR, 'html', `${safe}.html`);
+    await fs.writeFile(file, data?.html ?? '');
+    const rel = path.relative(process.cwd(), file).replace(/\\/g, '/');
+    console.log(`💾 HTML -> ${rel}`);
+    return rel;
+  });
+
   const inject = await fs.readFile(path.join(HERE, 'inject.js'), 'utf8');
   await ctx.addInitScript({ content: inject });
 
@@ -433,6 +444,17 @@ async function main(): Promise<void> {
     await page.click('.inventory_item_name'); // -> mo bang chon thuoc tinh CSS
     await page.click('#__rec_csspick .__rec_csr'); // chon thuoc tinh dau (text-transform) -> log assert css
     await page.waitForTimeout(200);
+    // HTML SAVE: lay HTML element -> dat ten -> luu vao html/<NAME>/<ten>.html
+    await page.evaluate(() => (window as any).__recSetInspect && (window as any).__recSetInspect('html'));
+    await page.click('.inventory_item_name'); // inspect 'html' -> mo panel HTML
+    const htmlDefName = await page.inputValue('#__rec_html_name').catch(() => '');
+    console.log('HTML-NAME: ten goi y theo class =', htmlDefName, '(ky vong "inventory_item_name")');
+    await page.fill('#__rec_html_name', 'test_block').catch(() => {});
+    await page.click('#__rec_html_save').catch(() => {});
+    await page.waitForTimeout(400);
+    const htmlSaved = await fs.readFile(path.join(DIR, 'html', 'test_block.html'), 'utf8').then((c) => c.indexOf('<') >= 0).catch(() => false);
+    console.log('HTML-SAVE: recording/' + NAME + '/html/test_block.html co noi dung =', htmlSaved);
+    await page.evaluate(() => { var p = document.getElementById('__rec_htmlpick'); if (p) p.style.display = 'none'; });
     // MULTI-TAB/POPUP: mo popup toi URL that (same-origin) -> kiem ctx.on('page') bat + TOOLBAR hien KHONG can reload
     const popupBefore = pageSeq;
     const [popupPg] = await Promise.all([

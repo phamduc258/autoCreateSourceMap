@@ -3,7 +3,8 @@
 Playwright **test recorder** — mở trình duyệt thật, ghi lại thao tác của bạn rồi sinh ra
 `recording/<TÊN>/` gồm **`.spec.ts`** (Playwright test), **`.json`** (thao tác + nhiều loại
 selector cho AI) và **`.md`**. Có cửa sổ code live (sửa tay, undo/redo, phím tắt), bảng chọn
-selector theo độ tin cậy, công cụ Assert (visible/text/value/CSS) và lấy HTML element.
+selector theo độ tin cậy, công cụ Assert (visible/text/value/CSS) và **lấy + lưu HTML element**
+(format đẹp, tên file gợi ý theo id/class) vào `recording/<TÊN>/html/`.
 
 **Đa tab (popup):** click mở tab mới → tự sinh `const page1Promise = page.waitForEvent('popup')`
 + `const page1 = await page1Promise`, các thao tác ở tab mới dùng `page1.…` (tab thứ 3 → `page2`…).

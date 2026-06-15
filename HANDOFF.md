@@ -99,6 +99,8 @@ RECORD_TIMEOUT=120000 npm run record -- <url> --name=TC003                    # 
 
 **🎨 CSS (assert CSS):** bấm 🎨 → click element → bảng **thuộc tính CSS computed** (text-transform/color/font-size…) → chọn 1 → sinh `expect(...).toHaveCSS('prop','value')` (test kiểu hiển thị, vd chữ in HOA do `text-transform`). **Text assert lấy `textContent`** (không `innerText`) → khớp `toContainText`/`getByText` (không lệch khi CSS in HOA).
 
+**`</>` Lấy/Lưu HTML:** bấm `</>` → click element → panel: outerHTML ⇄ innerHTML · Copy · **ô tên file** (gợi ý theo id→class→tag, bỏ class tự sinh qua `looksGenerated`) · **💾 Lưu** (hoặc Enter) → binding `ctx.exposeBinding('__saveHtml')` ghi `recording/<NAME>/html/<tên>.html`. HTML **format đẹp** (`prettyHtml` trong inject.js: re-indent 2-space, `<tag>text</tag>` 1 dòng; input từ DOM nên luôn hợp lệ → không cần thư viện). Công cụ INSPECT — KHÔNG sinh test step.
+
 **Type action `.json`:** navigate · **goback · goforward** · click · rightclick · dblclick · hover · fill · select · press · pick · assert(visible/text/value/**css** kèm `cssProp`) · screenshot.
 - **Điều hướng:** click link → `// -> URL` (comment) · **Back/Forward** trình duyệt → `page.goBack()`/`goForward()` · URL đầu → `page.goto()` · click mở **tab mới** → `page1`/`page2`… + `waitForEvent('popup')` (xem mục 10 · Đa tab).
 
