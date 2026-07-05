@@ -2,6 +2,7 @@ node_modules/
 output/
 .env
 recorder/dist/
+recorder/*.tgz
 
 # Artifact tai trinh duyet thu cong (ban cai that nam o cache ms-playwright, khong can trong repo)
 chrome-win64.zip

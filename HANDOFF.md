@@ -1,8 +1,8 @@
 # HANDOFF — Tool lấy DOM để AI sinh Playwright test
 
 > File tóm tắt để **tiếp tục công việc ở một session Claude khác**. Đọc file này là nắm đủ bối cảnh.
-> Tạo: 2026-06-03 · **Cập nhật: 2026-06-05.**
-> Trạng thái: 2 tool (Crawler + Recorder) chạy được. **Đang cắm SITE THẬT (PORTERS HRBC staging) bằng RECORDER + Chrome hệ thống.**
+> Tạo: 2026-06-03 · **Cập nhật: 2026-07-01.**
+> Trạng thái: 2 tool (Crawler + Recorder) chạy được. **Đang cắm SITE THẬT (PORTERS HRBC staging) bằng RECORDER + Chrome hệ thống.** Recorder đã **đóng gói npm CLI** `@tayphuong7bai/pw-recorder` (v1.0.3, MIT) — xem mục 9.
 > Đọc thêm `README.md` (đã đầy đủ: yêu cầu môi trường, cài đặt, .env, troubleshooting).
 
 ---
@@ -42,6 +42,8 @@ crawler/                  # TOOL A — crawl tự động theo config
 recorder/                 # TOOL B — ghi thao tác kiểu codegen (xem mục 9)
   record.ts               # Node: bindings, specLines/currentSpec, cửa sổ code, dock, state, channel
   inject.js               # chạy trong trang: toolbar + sinh selector (unique/family/label→input) + picker
+  package.json·build.mjs·LICENSE·README.md  # ĐÓNG GÓI npm CLI @tayphuong7bai/pw-recorder (MIT) — mục 9.1
+  dist/                   # (build ra, gitignored) cli.js + inject.js để publish
 output/                   # (gitignored) kết quả crawl
 recording/<name>/         # kết quả record: {.json, .md, .spec.ts, shots/} (output, xóa được)
 tests/ + testcases/       # demo POM saucedemo (PASS) + test case mẫu
@@ -74,11 +76,16 @@ RECORD_TIMEOUT=120000 npm run record -- <url> --name=TC003                    # 
 ```
 (Trình duyệt: `.env` `BROWSER_CHANNEL=chrome` → mở Chrome hệ thống, headed.)
 
+**9.1 — Đóng gói npm CLI (`@tayphuong7bai/pw-recorder` 1.0.3, MIT):** recorder cũng publish được thành package độc lập để cài vào dự án bất kỳ.
+- **Dùng:** `npm i -D @tayphuong7bai/pw-recorder` → `npx pw-recorder <url> --name=TC001` (ghi ra `recording/` trong `process.cwd()`).
+- **Build/publish:** `cd recorder && npm i && npm run build && npm publish` — `build.mjs` dùng esbuild bundle `record.ts → dist/cli.js` (giữ `@playwright/test`+`dotenv` external) rồi copy `inject.js → dist/inject.js`; `bin: pw-recorder`, `files: [dist]`, `prepublishOnly` tự build. `record.ts` đọc `inject.js` qua `import.meta.url` (cạnh `cli.js`).
+- Root `npm run record` chạy thẳng nguồn qua `tsx` (dev). Package root `dom-crawler` (1.0.0, private) ≠ package recorder (1.0.3, public). Chi tiết: `recorder/README.md`.
+
 **Output `recording/<name>/`:** `.spec.ts` (chạy được) · `.json` (bản giàu cho Claude: mỗi action có `unique.best`/`unique.all` + `family`) · `.md` · `shots/`.
 
 **Toolbar (chỉ ICON, hover ra tooltip giải thích):**
 - **Chính (luôn hiện):** ☰ kéo · **●** Rec · **📋** List SL (ON = mở bảng chọn selector · OFF = tự lấy best) · **🎯** Pick · **⋯** More.
-- **Nhóm ⋯ (tool phụ):** **👁** Visible · **🔤** Text · **=** Value · **🎨** CSS · **📷** Shot. Mở ⋯ **cố định mép trái → nở sang phải** (không nhảy); trạng thái mở giữ qua chuyển trang.
+- **Nhóm ⋯ (tool phụ):** **👁** Visible · **🔤** Text · **=** Value · **🎨** CSS · **`</>`** HTML · **📷** Shot. Mở ⋯ **cố định mép trái → nở sang phải** (không nhảy); trạng thái mở giữ qua chuyển trang.
 - Đã **bỏ nút `</> Code`** (đã có cửa sổ live code riêng).
 - **Bền:** có trên **tab/popup mới** (re-inject khi `domcontentloaded`, guard chống nhân đôi) + **tự gắn lại** khi SPA re-render `<body>` (MutationObserver). State giữ qua chuyển trang.
 
@@ -118,7 +125,7 @@ RECORD_TIMEOUT=120000 npm run record -- <url> --name=TC003                    # 
 - **Picker/CSS-pick + xếp hạng:** `uniqueCandidates()` trả về **đã sort** theo `rankCands` (TRUST+số khớp) → `showPicker()`, auto-pick (`__record`) và preview **dùng chung 1 thứ hạng** (click == ⭐). `showCssPick()` liệt kê CSS computed → `assert css` → `toHaveCSS`. Toolbar icon-only + nhóm `⋯` (state `more`). Cả 2 panel + toolbar KÉO được qua `makeDrag(handle,target)` (bỏ qua phần tử id `_x`).
 - **Đa tab (popup) — TỰ ĐỘNG:** mỗi action gắn `pageIdx` (từ `source.page`): tab gốc 0→`page`, popup 1→`page1`, 2→`page2`… `ctx.on('page')` bắt tab mới → `p.opener()` tìm tab cha → đánh dấu `opensPopup` lên **click cha** → `specLines` sinh `const pageNPromise = <cha>.waitForEvent('popup')` TRƯỚC click + `const pageN = await …Promise` SAU; action sau prefix `pageN.` (`asLocator`/`bodyLine` nhận tham số biến tab). File: chưa sửa tay → ghi từ `currentSpec` (chắc đúng pattern); đã sửa tay (`window.__userEdited`) → giữ editor. Live: popup → `renderCode(true)` đồng bộ TOÀN BỘ (chỉ khi chưa sửa tay). Modal **cùng tab** giữ nguyên `page`.
 - **Toolbar bền trên tab mới / SPA (PORTERS) — QUAN TRỌNG, ĐỪNG GỠ:** app SPA có thể reset/thay cả cây DOM sau render, xoá toolbar + listener cấp `document`. Nhiều lớp phòng tuyến: (1) `attachNav` re-inject `p.evaluate(inject)` ngay + `domcontentloaded`/`load` + retry 400/1200/2500ms (đảm bảo inject chạy ≥1 lần); (2) `ensureUI` bọc try/catch, lỗi → `ui=null` cho thử lại; (3) **gắn toolbar vào `document.documentElement` (`<html>`)** thay vì `<body>` → SPA re-render body không xoá; (4) **`keepAlive` `setInterval` 700ms** (KHÔNG dựa observer — observer "chết" theo documentElement cũ): mất toolbar → gắn lại từ `recNodes`; (5) **listener `document` tách hàm có tên** (`onClick`/`onChange`/`onKey`/`onMove`/`onContext`/`onUp`) + `attachDocListeners()` (removeEventListener rồi add → idempotent) gọi trong `keepAlive` → ghi click/fill/key **sống sót khi app reset document**. Guard `window.__recInjected` vẫn ở đầu IIFE.
-- **Cửa sổ code (1 editor):** context riêng, dock CDP, **`viewport:null`**. `specLines()` sinh `{text,meta}` (`act`=index action, `fragile`) → `renderCode` → `window.__renderSpec`: lần đầu nạp full, sau đó **chèn action mới** (act ≥ `__applied`) qua `setRangeText(...,'preserve')` tại `insertPoint()` (con trỏ trong thân `=> {…});`? dòng con trỏ : cuối thân). Undo/redo = **stack snapshot tự quản** (`commit/flush/restore` quanh mọi mutation; chặn Ctrl+Z native). **Auto-save:** `scheduleSave()` debounce 700ms trong `sync()` → `__saveCode` ghi file; `writeOutput` kéo `#ed` làm `.spec.ts`. Đã bỏ `manualSpec`/`__recUndo`/`__recDeleteStep`/Edit-Live.
+- **Cửa sổ code (1 editor):** context riêng, dock CDP, **`viewport:null`**. `specLines()` sinh `{text,meta}` (`act`=index action, `fragile`) → `renderCode` → `window.__renderSpec`: lần đầu nạp full, sau đó **chèn action mới** (act ≥ `__applied`) qua `setRangeText(...,'preserve')` tại `insertPoint()` (con trỏ trong thân `=> {…});`? dòng con trỏ : cuối thân). Undo/redo = **stack snapshot tự quản** (`commit/flush/restore` quanh mọi mutation; chặn Ctrl+Z native). **Auto-save:** `scheduleSave()` debounce 700ms trong `sync()` → `__saveCode` ghi file; `writeOutput` kéo `#ed` làm `.spec.ts`. Đã bỏ `manualSpec`/`__recUndo`/`__recDeleteStep`/Edit-Live. **FIX Ctrl+C không mất sửa tay:** SIGINT giết CẢ Chrome (cùng process group) → cuối phiên không đọc lại được editor → trước đây `writeOutput` fallback về `currentSpec` GHI ĐÈ mất bản sửa. Giờ `__saveCode` gửi kèm cờ đã-sửa-tay, Node giữ `lastSavedCode`/`lastSavedEdited` → fallback về **bản auto-save cuối** (selftest `CTRLC-KEEP-EDIT`). Chỉ mất tối đa <700ms gõ cuối chưa kịp save.
 - **Back/Forward:** `pushNav` dùng `navState` (lịch sử URL mỗi tab) → URL khớp mục kề **và KHÔNG do click <1s** → `goback`/`goforward`; còn lại `navigate` (đầu→`goto`, sau→comment).
 - **State recorder** giữ ở Node (`__recGetState`/`__recSetState`). Kết thúc: `page.on('close')` / `browser disconnected` / SIGINT (KHÔNG `waitForEvent('close')`).
 - `extract.ts` (crawler) testid attribute-aware (`data-test`...) + quét `[data-test*]`/`[data-cy]`/`[data-qa]`; `looksGenerated` cũng đã sửa bắt `jssNNN`.

@@ -179,7 +179,7 @@ Bảng chia **2 mục tách biệt**:
 
 **Cửa sổ code riêng** mở **bên phải** app — **1 EDITOR DUY NHẤT** (luôn sửa được; số dòng + syntax highlight). Không còn tách Live/Edit.
 - **Vừa tự sinh vừa sửa tay:** thao tác mới **tự chèn** vào editor — tại **dòng con trỏ** nếu con trỏ đang trong thân test (`=> { … });`), ngược lại **chèn cuối thân** — **không ghi đè** phần bạn đang sửa, giữ nguyên con trỏ.
-- **TỰ ĐỘNG LƯU** vào `<name>.spec.ts` sau ~700ms ngừng gõ (header hiện **"💾 Đã lưu ✔"** / **"✏️ chưa lưu…"**). Không cần bấm Save; **Ctrl+S** để lưu ngay.
+- **TỰ ĐỘNG LƯU** vào `<name>.spec.ts` sau ~700ms ngừng gõ (header hiện **"💾 Đã lưu ✔"** / **"✏️ chưa lưu…"**). Không cần bấm Save; **Ctrl+S** để lưu ngay. Bản sửa tay được **giữ nguyên kể cả khi kết thúc bằng Ctrl+C** (không bị ghi đè bởi code tự sinh).
 - **Undo/Redo** (↶/↷ hoặc **Ctrl+Z / Ctrl+Y**): tự quản lý lịch sử → hoàn tác được **cả phần sửa tay LẪN action vừa chèn** (kể cả "lỡ ghi nhầm 1 thao tác").
 - **Phím tắt:** **Tab/Shift+Tab** thụt lề · **Ctrl+/** comment · **Ctrl+D** nhân dòng · **Alt+↑/↓** chuyển dòng (hover tiêu đề xem danh sách).
 - **Copy** → chép nội dung (báo **"Đã chép ✔"**). Dòng selector **positional** đánh dấu bằng comment **`// 🔴 selector mong manh`**.
@@ -196,6 +196,34 @@ Bảng chia **2 mục tách biệt**:
 
 > **Độ bền selector:** ưu tiên neo theo định danh ổn định/nội dung; selector **theo vị trí** (`cssPath`/`xpathPath`) bị gắn 🔴 *mong manh*. Tool cảnh báo "🔴 N action mong manh → nên thêm data-testid" trong `.md` + header `.spec.ts`. `looksGenerated` loại class tự sinh.
 > Thư mục `recording/` chỉ là **output** → xóa thoải mái, tự tạo lại. (Đừng nhầm với `recorder/` = mã nguồn tool.)
+
+### 7.1 Dùng recorder như **npm package độc lập** (`@tayphuong7bai/pw-recorder`)
+
+Recorder còn được **đóng gói thành CLI npm công khai** (license **MIT**) để cài vào **bất kỳ dự án test nào** mà không cần clone repo này. Mã nguồn ở `recorder/`, publish với tên **`@tayphuong7bai/pw-recorder`** (hiện **1.0.3**).
+
+**Người dùng — cài & chạy:**
+
+```bash
+npm i -D @tayphuong7bai/pw-recorder     # cài như devDependency
+npx playwright install chromium         # (1 lần) — hoặc dùng Chrome hệ thống: đặt BROWSER_CHANNEL=chrome
+npx pw-recorder <url> --name=TC001      # mở trình duyệt; thao tác; ĐÓNG cửa sổ để kết thúc
+```
+
+→ File ghi ra `recording/TC001/` **ngay trong thư mục đang chạy** (`process.cwd()`). Dùng cùng bộ biến môi trường ở mục **2** (`RECORD_STORAGE`, `BROWSER_CHANNEL`, `RECORD_TIMEOUT`, `RECORD_SELECTORS`; đọc cả `.env`).
+
+**Tác giả — build & publish:**
+
+```bash
+cd recorder
+npm i && npm run build      # esbuild → dist/cli.js (+ copy inject.js → dist/inject.js)
+npm publish                 # publishConfig.access=public đã set; prepublishOnly tự build
+npm version patch           # (minor/major) ra bản mới: tự tăng version + tạo git tag
+```
+
+`bin` = `pw-recorder → dist/cli.js`; chỉ thư mục `dist/` được ship (field `files`). Hướng dẫn đầy đủ (build/publish public & private): **`recorder/README.md`**.
+
+> ℹ️ **2 cách chạy recorder — cùng tính năng:** (a) trong repo này, `npm run record` chạy thẳng mã nguồn `recorder/record.ts` qua `tsx` (dev); (b) cài bản đã build từ npm như trên.
+> ⚠️ **2 package tách biệt, 2 version riêng:** `dom-crawler` (root, `1.0.0`, **private**) ≠ `@tayphuong7bai/pw-recorder` (thư mục `recorder/`, `1.0.3`, **public**). Các commit "npm 1.0.x" chỉ tăng version của package recorder.
 
 ---
 

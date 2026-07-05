@@ -3,78 +3,7 @@
     "i": 1,
     "type": "navigate",
     "url": "http://127.0.0.1:8000/",
-    "ts": 1781493171172,
-    "pageIdx": 0
-  },
-  {
-    "url": "http://127.0.0.1:8000/",
-    "ts": 1781493177805,
-    "type": "click",
-    "tag": "a",
-    "role": "link",
-    "name": "Login",
-    "unique": {
-      "all": [
-        {
-          "kind": "role",
-          "value": "getByRole('link', { name: 'Login' })",
-          "fragile": false,
-          "n": 1
-        },
-        {
-          "kind": "css[href]",
-          "value": "a[href=\"http://127.0.0.1:8000/login\"]",
-          "fragile": false,
-          "n": 1
-        },
-        {
-          "kind": "xpath.text",
-          "value": "//a[normalize-space()=\"Login\"]",
-          "fragile": false,
-          "n": 1
-        },
-        {
-          "kind": "cssPath",
-          "value": "body > nav > div > div > ul > li:nth-of-type(8) > a",
-          "fragile": true,
-          "n": 1
-        },
-        {
-          "kind": "xpathPath",
-          "value": "/html[1]/body[1]/nav[1]/div[1]/div[1]/ul[1]/li[8]/a[1]",
-          "fragile": true,
-          "n": 1
-        },
-        {
-          "kind": "text",
-          "value": "getByText('Login', { exact: true })",
-          "fragile": false,
-          "n": 2
-        }
-      ],
-      "best": "getByRole('link', { name: 'Login' })"
-    },
-    "family": {
-      "count": 9,
-      "all": [
-        {
-          "kind": "role",
-          "value": "getByRole('listitem')",
-          "n": 9
-        }
-      ],
-      "within": "getByRole('link', { name: 'Login' })",
-      "best": "getByRole('listitem')"
-    },
-    "fragile": false,
-    "pageIdx": 0,
-    "i": 2
-  },
-  {
-    "i": 3,
-    "type": "navigate",
-    "url": "http://127.0.0.1:8000/login",
-    "ts": 1781493178214,
+    "ts": 1783246692269,
     "pageIdx": 0
   }
 ]

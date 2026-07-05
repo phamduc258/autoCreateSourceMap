@@ -115,7 +115,7 @@ button{cursor:pointer;border:0;border-radius:6px;padding:5px 10px;background:#37
   $('bCopy').onclick=function(){ try{ navigator.clipboard.writeText($('ed').value); copyFlash(); }catch(e){} };
   $('bUndo').onclick=function(){ $('ed').focus(); undo(); };
   $('bRedo').onclick=function(){ $('ed').focus(); redo(); };
-  function doSave(){ clearTimeout(saveTimer); if(window.__saveCode)window.__saveCode($('ed').value); setStat('saved'); } // tu dong goi (sync) + Ctrl+S
+  function doSave(){ clearTimeout(saveTimer); if(window.__saveCode)window.__saveCode($('ed').value, !!window.__userEdited); setStat('saved'); } // tu dong goi (sync) + Ctrl+S; gui kem co "da sua tay" de Node giu fallback dung
   $('ed').addEventListener('input',function(){ window.__userEdited=true; sync(); clearTimeout(htimer); htimer=setTimeout(commit,400); }); // go tay -> commit sau 400ms idle (danh dau da sua tay)
   $('ed').addEventListener('keydown',function(e){
     var k=e.key, ctrl=(e.ctrlKey||e.metaKey);
@@ -378,7 +378,15 @@ async function main(): Promise<void> {
   // CUA SO RIENG hien code (context rieng -> khong bi recorder chen UI, khong bi ghi)
   const codeCtx = await browser.newContext({ viewport: null }); // co theo cua so -> nut Edit/Save/Copy khong bi tran ra ngoai
   await codeCtx.addInitScript('window.__name = window.__name || function (f) { return f; };'); // tranh loi __name khi highlight
-  await codeCtx.exposeBinding('__saveCode', async (_s: any, text: string) => { await fs.writeFile(path.join(DIR, `${NAME}.spec.ts`), text).catch(() => {}); }); // AUTO-SAVE (im lang; trang thai hien o cua so code)
+  // AUTO-SAVE (im lang; trang thai hien o cua so code). GIU BAN SAO CUOI o Node (lastSavedCode):
+  // Ctrl+C gui SIGINT cho CA process group -> Chrome chet CUNG LUC voi Node -> luc ket thuc khong doc lai duoc
+  // editor -> truoc day writeOutput fallback ve currentSpec va GHI DE mat ban sua tay. Gio fallback ve ban save cuoi.
+  let lastSavedCode: string | null = null;
+  let lastSavedEdited = false;
+  await codeCtx.exposeBinding('__saveCode', async (_s: any, text: string, edited?: boolean) => {
+    lastSavedCode = text; lastSavedEdited = !!edited;
+    await fs.writeFile(path.join(DIR, `${NAME}.spec.ts`), text).catch(() => {});
+  });
   const codePage = await codeCtx.newPage();
   await codePage.setContent(CODE_HTML);
   renderCode = (full?: boolean) => {
@@ -568,6 +576,11 @@ async function main(): Promise<void> {
     console.log(`CODE WINDOW: ${win.len} ky tu, highlight=${win.hl}, gutter ${win.ln} so dong`);
     const cssA = actions.find((a) => a.type === 'assert' && a.assert === 'css');
     console.log('CSS ASSERT:', cssA ? `toHaveCSS('${cssA.cssProp}','${String(cssA.value || '').slice(0, 20)}')` : '(KHONG co)');
+    // MO PHONG Ctrl+C: dong HAN context cua so code (nhu Chrome bi SIGINT giet) TRUOC khi ket thuc.
+    // Editor dang giu ban sua tay "await page.locator('#x')..." (test CODE WINDOW o tren, da dispatch input).
+    // Ky vong: doc live FAIL -> fallback lastSavedCode -> .spec.ts van giu ban sua (log CTRLC-KEEP-EDIT sau writeOutput).
+    await page.waitForTimeout(900); // cho auto-save ban cuoi (debounce 700ms) kip day ve Node
+    await codeCtx.close().catch(() => {});
   } else {
     // Cho VO THOI HAN: ket thuc khi dong trinh duyet hoac Ctrl+C.
     // (Truoc day dung page.waitForEvent('close') -> co timeout mac dinh 30s nen tu dung.)
@@ -578,9 +591,19 @@ async function main(): Promise<void> {
     });
   }
 
-  const docText = await codePage.evaluate(() => { const e = document.getElementById('ed') as HTMLTextAreaElement | null; return e ? e.value : null; }).catch(() => null); // noi dung editor (nguon that)
-  const userEdited = await codePage.evaluate(() => !!(window as any).__userEdited).catch(() => false); // user co go tay khong
+  // Noi dung editor (nguon that). Ctrl+C: cua so code co the DA CHET (SIGINT giet ca Chrome) -> doc live that bai
+  // -> dung ban auto-save cuoi (lastSavedCode) de KHONG mat sua tay. (Toi da mat <700ms go cuoi chua kip auto-save.)
+  const liveDoc = await codePage.evaluate(() => {
+    const e = document.getElementById('ed') as HTMLTextAreaElement | null;
+    return e ? { text: e.value, edited: !!(window as any).__userEdited } : null;
+  }).catch(() => null);
+  const docText = liveDoc ? liveDoc.text : lastSavedCode;
+  const userEdited = liveDoc ? liveDoc.edited : lastSavedEdited;
   await writeOutput(actions, docText, userEdited);
+  if (SELF_TEST) {
+    const fin = await fs.readFile(path.join(DIR, `${NAME}.spec.ts`), 'utf8').catch(() => '');
+    console.log('CTRLC-KEEP-EDIT: cua so code da chet -> .spec.ts van giu ban sua tay =', fin.includes("locator('#x')"));
+  }
   try { await browser.close(); } catch (e) { /* trinh duyet da dong */ }
   console.log(`\n✔ ${actions.length} thao tac -> recording/${NAME}/ { ${NAME}.json · ${NAME}.md · ${NAME}.spec.ts }`);
 }
